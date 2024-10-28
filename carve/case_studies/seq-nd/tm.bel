@@ -1,0 +1,20 @@
+%======================================================%
+% Terms
+%======================================================%
+
+% Natural deduction terms as objects
+
+LF obj : type =
+| lam : (obj → obj) → obj
+| app : obj → obj → obj
+| pair : obj → obj → obj
+| fst : obj → obj
+| snd : obj → obj
+| tuple : obj → obj → obj
+| elim-tuple : obj → (obj → obj → obj) → obj
+| unit : obj
+| elim-unit : obj → obj → obj
+| inl : obj → obj
+| inr : obj → obj
+| elim-sum : obj → (obj → obj) → (obj → obj) → obj
+| coerce : obj → tp → obj;

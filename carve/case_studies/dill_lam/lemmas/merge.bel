@@ -1,0 +1,470 @@
+%------------------------------------------------------%
+% Basic properties of judgment
+%------------------------------------------------------%
+
+% 'Prune' LF context to remove dependencies:
+% Obtain from [Ψ,x:obj ⊢ merge Δ₁ Δ₂ Δ[..]] that neither Δ₁ nor Δ₂ depend on x
+% and from [Ψ,x:obj ⊢ merge Δ₁[..] Δ₂ Δ] that neither Δ₂ nor Δ depend on x
+
+inductive PruneMerge : (Ψ:vctx) {MG:[Ψ,x:obj ⊢ merge Δ₁ Δ₂ Δ[..]]} ctype =
+  | Prune-Merge : [Ψ,x:obj ⊢ cx_eq Δ₁ Δ₁'[..]] → [Ψ,x:obj ⊢ cx_eq Δ₂ Δ₂'[..]] → [Ψ ⊢ merge Δ₁' Δ₂' Δ]
+    → {MG:[Ψ,x:obj ⊢ merge Δ₁ Δ₂ Δ[..]]} PruneMerge [Ψ,x:obj ⊢ MG];
+
+rec prune_merge : (Ψ:vctx) {MG:[Ψ,x:obj ⊢ merge Δ₁ Δ₂ Δ[..]]} PruneMerge [Ψ,x:obj ⊢ MG] =
+  / total 1 /
+  mlam MG ⇒ case [_,x:obj ⊢ MG] of
+  | [_,x:obj ⊢ mg/n] ⇒ Prune-Merge [_ ⊢ cx/refl] [_ ⊢ cx/refl] [_ ⊢ mg/n] [_ ⊢ _]
+  | [_,x:obj ⊢ mg/c MG1 MLT[]] ⇒
+    let Prune-Merge [_,x:obj ⊢ cx/refl] [_ ⊢ cx/refl] [_ ⊢ MG1'] [_ ⊢ _] = prune_merge [_,x:obj ⊢ MG1] in
+    Prune-Merge [_ ⊢ cx/refl] [_ ⊢ cx/refl] [_ ⊢ mg/c MG1' MLT[]] [_ ⊢ _]
+  ;
+
+inductive PruneMerge_l : (Ψ:vctx) {MG:[Ψ,x:obj ⊢ merge Δ₁[..] Δ₂ Δ]} ctype =
+  | Prune-Merge-l : [Ψ,x:obj ⊢ cx_eq Δ₂ Δ₂'[..]] → [Ψ,x:obj ⊢ cx_eq Δ Δ'[..]] → [Ψ ⊢ merge Δ₁ Δ₂' Δ']
+    → {MG:[Ψ,x:obj ⊢ merge Δ₁[..] Δ₂ Δ]} PruneMerge_l [Ψ,x:obj ⊢ MG];
+
+rec prune_merge_l : (Ψ:vctx) {MG:[Ψ,x:obj ⊢ merge Δ₁[..] Δ₂ Δ]} PruneMerge_l [Ψ,x:obj ⊢ MG] =
+  / total 1 /
+  mlam MG ⇒ case [_,x:obj ⊢ MG] of
+  | [_,x:obj ⊢ mg/n] ⇒ Prune-Merge-l [_ ⊢ cx/refl] [_ ⊢ cx/refl] [_ ⊢ mg/n] [_ ⊢ _]
+  | [_,x:obj ⊢ mg/c MG1 MLT[]] ⇒
+    let Prune-Merge-l [_ ⊢ cx/refl] [_ ⊢ cx/refl] [_ ⊢ MG2] [_ ⊢ _] = prune_merge_l [_,x:obj ⊢ MG1] in
+    Prune-Merge-l [_ ⊢ cx/refl] [_ ⊢ cx/refl] [_ ⊢ mg/c MG2 MLT[]] [_ ⊢ _]
+  ;
+
+%------------------------------------------------------%
+% Algebraic properties
+%------------------------------------------------------%
+
+% If Δ₁ ⋈ Δ₂ = Δ and Δ₁ ⋈ Δ₂ = Δ', then Δ = Δ'
+
+rec merge_func : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ merge Δ₁ Δ₂ Δ'] → [Ψ ⊢ cx_eq Δ Δ'] =
+  / total 1 /
+  fn mg1, mg2 ⇒ case mg1 of
+  | [_ ⊢ mg/n] ⇒ let [_ ⊢ mg/n] = mg2 in [_ ⊢ cx/refl]
+  | [_ ⊢ mg/c MG1 MLT1[]] ⇒
+    let [_ ⊢ mg/c MG2 MLT2[]] = mg2 in
+    let [_ ⊢ cx/refl] = merge_func [_ ⊢ MG1] [_ ⊢ MG2] in
+    let [ ⊢ mult/refl] = mult_func [ ⊢ MLT1] [ ⊢ MLT2] in
+    [_ ⊢ cx/refl]
+  ;
+
+% Δ₁ ⋈ Δ₂ = Δ₂ ⋈ Δ₁
+
+rec merge_comm : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ merge Δ₂ Δ₁ Δ] =
+  / total 1 /
+  fn MG ⇒ case MG of
+  | [_ ⊢ mg/n] ⇒ [_ ⊢ mg/n]
+  | [_ ⊢ mg/c MG1 MLT1[]] ⇒
+    let [_ ⊢ MG2] = merge_comm [_ ⊢ MG1] in
+    let [ ⊢ MLT2] = mult_comm [ ⊢ MLT1] in
+    [_ ⊢ mg/c MG2 MLT2[]]
+  ;
+
+% If exh(Δ₁), then Δ₁ ⋈ Δ₂ = Δ₂
+
+rec merge_id : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ exh Δ₁] → [Ψ ⊢ cx_eq Δ₂ Δ] =
+  / total 1 /
+  fn MG, EXH ⇒ case MG of
+  | [_ ⊢ mg/n] ⇒ [_ ⊢ cx/refl]
+  | [_ ⊢ mg/c MG1 MLT[]] ⇒
+    let [_ ⊢ exh/c EXH1] = EXH in
+    let [_ ⊢ cx/refl] = merge_id [_ ⊢ MG1] [_ ⊢ EXH1] in
+    let [ ⊢ mult/refl] = mult_id [ ⊢ MLT] in
+    [_ ⊢ cx/refl]
+  ;
+
+rec merge_id_r : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ exh Δ₂] → [Ψ ⊢ cx_eq Δ₁ Δ] =
+  / total 1 /
+  fn MG, EXH ⇒ merge_id (merge_comm MG) EXH
+  ;
+
+%{ - - - - - - - - - - - - - - - - %
+% If Δ₁ ⋈ Δ₂ = Δ₂ then Δ₁ is exhausted
+
+rec merge_id_2 : (Ψ:vctx) [γ ⊢ merge Δ Δ' Δ'] → [Ψ ⊢ exh Δ] = ? ;
+% - - - - - - - - - - - - - - - - }%
+
+% Existence of identity context for any Δ; i.e., obtain the result of setting all linear names to `used`
+
+LF mg_getid : lctx → type = merge-getid : merge Δ Δ' Δ → exh Δ' → mg_getid Δ;
+
+rec merge_getid : (Ψ:vctx) {Δ:[Ψ ⊢ lctx]} [Ψ ⊢ mg_getid Δ] =
+  / total 1 /
+  mlam Δ ⇒
+  case [_ ⊢ Δ] of
+  | [_ ⊢ nil] ⇒ [_ ⊢ merge-getid mg/n exh/n]
+  | [_ ⊢ cons Δ' _ A[] α[]] ⇒ ?
+    % let [_ ⊢ merge-getid MG EXH] = merge_getid [_ ⊢ Δ'] in
+    % case [ ⊢ α] of
+    % | [ ⊢ used] ⇒ [_ ⊢ merge-getid (mg/c MG •/us) (exh/c EXH)]
+    % | [ ⊢ lin] ⇒ [_ ⊢ merge-getid (mg/c MG •/a1) (exh/c EXH)]
+  ;
+
+% (Δ₁ ⋈ Δ₂) ⋈ Δ₃ = Δ₁ ⋈ (Δ₂ ⋈ Δ₃)
+
+  LF mg_assoc : merge _ _ _ → merge _ _ _ → type = mg-assoc :
+      merge Δ₂ Δ₃ Δ₂₃ → merge Δ₁ Δ₂₃ Δ
+   → {MG1:merge Δ₁₂ Δ₃ Δ} {MG2:merge Δ₁ Δ₂ Δ₁₂} mg_assoc MG1 MG2;
+
+rec merge_assoc : (Ψ:vctx) {MG1:[Ψ ⊢ merge Δ₁₂ Δ₃ Δ]} {MG2:[Ψ ⊢ merge Δ₁ Δ₂ Δ₁₂]} [Ψ ⊢ mg_assoc MG1 MG2] =
+  / total 1 /
+  mlam MG1, MG2 ⇒
+  case [_ ⊢ MG1] of
+  | [_ ⊢ mg/n] ⇒ let [_ ⊢ mg/n] = [_ ⊢ MG2] in [_ ⊢ mg-assoc mg/n mg/n _ _]
+  | [_ ⊢ mg/c MG1' MLT1[]] ⇒
+    let [_ ⊢ mg/c MG2' MLT2[]] = [_ ⊢ MG2] in
+    let [_ ⊢ mg-assoc MG3 MG4 _ _] = merge_assoc [_ ⊢ MG1'] [_ ⊢ MG2'] in
+    let [ ⊢ •/assoc MLT3 MLT4 _ _] = mult_assoc [ ⊢ MLT2] [ ⊢ MLT1] in
+    [_ ⊢ mg-assoc (mg/c MG3 MLT3[]) (mg/c MG4 MLT4[]) _ _]
+  ;
+
+% If Δ₁ ⋈ Δ₂ = Δ₁ ⋈ Δ₂', then Δ₂ = Δ₂' [unused]
+
+rec merge_cancl : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ merge Δ₁ Δ₂' Δ] → [Ψ ⊢ cx_eq Δ₂ Δ₂'] =
+  / total 1 /
+  fn MG1, MG2 ⇒ case MG1 of
+  | [_ ⊢ mg/n] ⇒ let [_ ⊢ mg/n] = MG2 in [_ ⊢ cx/refl]
+  | [_ ⊢ mg/c MG1' MLT1[]] ⇒
+    let [_ ⊢ mg/c MG2' MLT2[]] = MG2 in
+    let [_ ⊢ cx/refl] = merge_cancl [_ ⊢ MG1'] [_ ⊢ MG2'] in
+    let [ ⊢ mult/refl] = mult_canc [ ⊢ MLT1] [ ⊢ MLT2] in
+    [_ ⊢ cx/refl]
+  ;
+
+%------------------------------------------------------%
+% Context size
+%------------------------------------------------------%
+
+% Merged typing contexts are of the same size
+
+%{ - - - - - - - - - - - - - - - - %
+inductive sameLength : (Ψ:vctx)  {Δ₁:[Ψ ⊢ lctx]} {Δ₂:[Ψ ⊢ lctx]} {Δ:[Ψ ⊢ lctx]} ctype =
+  | EqLength : {n:[_ ⊢ nat]} [Ψ ⊢ len Δ₁ n[]]  → [Ψ ⊢ len Δ₂ n[]] → [Ψ ⊢ len Δ n[]]
+	       → sameLength [Ψ ⊢ Δ₁] [Ψ ⊢ Δ₂] [Ψ ⊢ Δ]
+  ;
+
+rec len_merge_eq :   (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → sameLength [Ψ ⊢ Δ₁] [Ψ ⊢ Δ₂] [Ψ ⊢ Δ] =
+ / total 1 /
+  fn MG ⇒ case MG of
+  | [_ ⊢ mg/n] ⇒ EqLength [ ⊢ zero] [_ ⊢ len/n] [_ ⊢ len/n][_ ⊢ len/n]
+  | [_ ⊢ mg/c MG MLT[]] ⇒
+    let EqLength [ ⊢ n] [_ ⊢ L1] [_ ⊢ L2] [_ ⊢ L] = len_merge_eq [_ ⊢ MG] in
+    EqLength [ ⊢ suc n] [_ ⊢ len/c L1] [_ ⊢ len/c L2] [_ ⊢ len/c L]		     	    
+  ;
+% - - - - - - - - - - - - - - - - }%
+
+rec len_merge1_l : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ len Δ n] → [Ψ ⊢ len Δ₁ n] =
+  / total 1 /
+  fn MG, NN ⇒ case MG of
+  | [_ ⊢ mg/n] ⇒ NN
+  | [_ ⊢ mg/c MG1 MLT[]] ⇒
+    let [_ ⊢ len/c NN1] = NN in
+    let [_ ⊢ NN2] = len_merge1_l [_ ⊢ MG1] [_ ⊢ NN1] in
+    [_ ⊢ len/c NN2]
+  ;
+
+rec len_merge1_r : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ len Δ n] → [Ψ ⊢ len Δ₂ n] =
+  / total /
+  fn MG, NN ⇒ len_merge1_l (merge_comm MG) NN
+  ;
+
+rec len_merge2_l : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ len Δ₁ n] → [Ψ ⊢ len Δ n] =
+  / total 1 /
+  fn MG, NN ⇒ case MG of
+  | [_ ⊢ mg/n] ⇒ NN
+  | [_ ⊢ mg/c MG1 MLT[]] ⇒
+    let [_ ⊢ len/c NN1] = NN in
+    let [_ ⊢ NN2] = len_merge2_l [_ ⊢ MG1] [_ ⊢ NN1] in
+    [_ ⊢ len/c NN2]
+  ;
+
+rec len_merge2_r : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ len Δ₂ n] → [Ψ ⊢ len Δ n] =
+  / total /
+  fn MG, NN ⇒ len_merge2_l (merge_comm MG) NN
+  ;
+
+%------------------------------------------------------%
+% Interaction with context manipulation
+%------------------------------------------------------%
+
+% Δ₁ ⋈ Δ₂ = Δ iff Δ₁⧵{(X:A)^α₁} ⋈ Δ₂⧵{(X:A)^α₂} = Δ⧵{(X:A)^(α₁•α₂)}
+% (Can also be viewed as lookup properties:
+  % - (X:A)^α ∈ₙ (Δ₁ ⋈ Δ₂), then (X:A)^α₁ ∈ₙ Δ₁ and (X:A)^α₂ ∈ₙ Δ₂ for some α₁∙α₂ = α
+  % - If (X:A) ∈ₙ Δ₁, then (X:A)^α₂ ∈ₙ Δ₂ and (X:A)^α ∈ₙ (Δ₁ ⋈ Δ₂) for some α₁∙α₂ = α
+
+LF mg_str : rmv Δ _ _ _ _ _ → merge _ _ Δ → type =
+  mg-str : rmv Δ₁ X A α₁ n Δ₁'
+	  → rmv Δ₂ X A α₂ n Δ₂'
+	  → • α₁ α₂ α
+	  → merge Δ₁' Δ₂' Δ'
+	  → {RMV:rmv Δ X A α n Δ'} {MG:merge Δ₁ Δ₂ Δ} mg_str RMV MG;
+
+rec merge_str : (Ψ:vctx) {RMV:[Ψ ⊢ rmv Δ X A α n Δ']} {MG:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} [_ ⊢ mg_str RMV MG] =
+  / total 1 /
+  mlam RMV, MG ⇒ case [_ ⊢ RMV] of
+  | [_ ⊢ rmv/t LN] ⇒
+    let [_ ⊢ mg/c MG1 MLT] = [_ ⊢ MG] in
+    let [_ ⊢ LN1] = len_merge1_l [_ ⊢ MG1] [_ ⊢ LN] in
+    let [_ ⊢ LN2] = len_merge1_r [_ ⊢ MG1] [_ ⊢ LN] in
+    [_ ⊢ mg-str (rmv/t LN1) (rmv/t LN2) MLT MG1 _ _]
+
+  | [_ ⊢ rmv/n RMV1] ⇒
+    let [_ ⊢ mg/c MG1 MLT1] = [_ ⊢ MG] in
+    let [_ ⊢ mg-str RMV2 RMV3 MLT2 MG2 _ _] = merge_str [_ ⊢ RMV1] [_ ⊢ MG1] in
+    [_ ⊢ mg-str (rmv/n RMV2) (rmv/n RMV3) MLT2 (mg/c MG2 MLT1) _ _]
+  ;
+
+LF mg_str2 : rmv Δ₁ _ _ _ _ _ → merge Δ₁ _ _ → type =
+  mg-str2 : rmv Δ₂ X A α₂ n Δ₂' → rmv Δ X A α n Δ' → • α₁ α₂ α → merge Δ₁' Δ₂' Δ' → {RMV:rmv Δ₁ X A α₁ n Δ₁'} {MG:merge Δ₁ Δ₂ Δ} mg_str2 RMV MG;
+
+rec merge_str2 : (Ψ:vctx) {RMV:[Ψ ⊢ rmv Δ₁ X A α₁ n Δ₁']} {MG:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} [_ ⊢ mg_str2 RMV MG] =
+  / total 1 /
+  mlam RMV, MG ⇒ case [_ ⊢ RMV] of
+  | [_ ⊢ rmv/t LN1] ⇒
+    let [_ ⊢ mg/c MG1 MLT] = [_ ⊢ MG] in
+    let [_ ⊢ LN2] = len_merge2_l [_ ⊢ MG1] [_ ⊢ LN1] in
+    let [_ ⊢ LN3] = len_merge1_r [_ ⊢ MG1] [_ ⊢ LN2] in
+    [_ ⊢ mg-str2 (rmv/t LN3) (rmv/t LN2) MLT MG1 _ _]
+  | [_ ⊢ rmv/n RMV1] ⇒
+    let [_ ⊢ mg/c MG1 MLT1] = [_ ⊢ MG] in
+    let [_ ⊢ mg-str2 RMV2 RMV3 MLT2 MG2 _ _] = merge_str2 [_ ⊢ RMV1] [_ ⊢ MG1] in
+    [_ ⊢ mg-str2 (rmv/n RMV2) (rmv/n RMV3) MLT2 (mg/c MG2 MLT1) _ _]
+  ;
+
+LF mg_weak : rmv _ _ _ α _ Δ → merge _ _ Δ → • _ _ α → type =
+  mg-weak : rmv Δ₁' X A α₁ n Δ₁ → rmv Δ₂' X A α₂ n Δ₂ → merge Δ₁' Δ₂' Δ' → {RMV:rmv Δ' X A α n Δ} {MG:merge Δ₁ Δ₂ Δ} {MLT:• α₁ α₂ α} mg_weak RMV MG MLT;
+
+rec merge_weak : (Ψ:vctx) {RMV:[Ψ ⊢ rmv Δ' X A[] α[] n[] Δ]} {MG:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} {MLT:[ ⊢ • α₁ α₂ α]} [Ψ ⊢ mg_weak RMV MG MLT[]] =
+  / total 2 /
+  mlam RMV, MG, MLT ⇒ case [_ ⊢ RMV] of
+  | [_ ⊢ rmv/t LN1] ⇒
+    let [_ ⊢ LN2] = len_merge1_l [_ ⊢ MG] [_ ⊢ LN1] in
+    let [_ ⊢ LN3] = len_merge1_r [_ ⊢ MG] [_ ⊢ LN1] in
+    [_ ⊢ mg-weak (rmv/t LN2) (rmv/t LN3) (mg/c MG MLT[]) _ _ _]
+  | [_ ⊢ rmv/n RMV1] ⇒
+    let [_ ⊢ mg/c MG1 MLT1] = [_ ⊢ MG] in
+    let [_ ⊢ mg-weak RMV2 RMV3 MG2 _ _ _] = merge_weak [_ ⊢ RMV1] [_ ⊢ MG1] [ ⊢ MLT] in
+    [_ ⊢ mg-weak (rmv/n RMV2) (rmv/n RMV3) (mg/c MG2 MLT1) _ _ _]
+  ;
+
+LF mg_weak2 : rmv _ _ _ α₁ _ Δ₁ → merge Δ₁ _ _ → • α₁ _ _ → type =
+  mg-weak2 : rmv Δ₂' X A α₂ n Δ₂ → rmv Δ' X A α n Δ → merge Δ₁' Δ₂' Δ' → {RMV:rmv Δ₁' X A α₁ n Δ₁} {MG:merge Δ₁ Δ₂ Δ} {MLT:• α₁ α₂ α} mg_weak2 RMV MG MLT;
+
+rec merge_weak2 : (Ψ:vctx) {RMV:[Ψ ⊢ rmv Δ₁' X A[] α₁[] n[] Δ₁]} {MG:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} {MLT:[ ⊢ • α₁ α₂ α]} [Ψ ⊢ mg_weak2 RMV MG MLT[]] =
+  / total 2 /
+  mlam RMV, MG, MLT ⇒ case [_ ⊢ RMV] of
+  | [_ ⊢ rmv/t LN1]:[_ ⊢ rmv _ _ _ α[] _ _] ⇒
+    let [_ ⊢ LN2] = len_merge2_l [_ ⊢ MG] [_ ⊢ LN1] in
+    let [_ ⊢ LN3] = len_merge1_r [_ ⊢ MG] [_ ⊢ LN2] in
+    [_ ⊢ mg-weak2 (rmv/t LN3) (rmv/t LN2) (mg/c MG MLT[]) _ _ _]
+  | [_ ⊢ rmv/n RMV1] ⇒
+    let [_ ⊢ mg/c MG1 MLT1] = [_ ⊢ MG] in
+    let [_ ⊢ mg-weak2 RMV2 RMV3 MG2 _ _ _] = merge_weak2 [_ ⊢ RMV1] [_ ⊢ MG1] [ ⊢ MLT] in
+    [_ ⊢ mg-weak2 (rmv/n RMV2) (rmv/n RMV3) (mg/c MG2 MLT1) _ _ _]
+  ;
+
+%{ - - - - - - - - - - - - - - - - %
+rec merge_str_nt : (Ψ:vctx) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ rmv Δ₁ X A α n Δ₁'] → [Ψ ⊢ lookup_nti X A n Δ] =
+  / total 1 /
+  fn MG, RMV ⇒
+  let ([_ ⊢ MG'],[_ ⊢ RMV']) = (MG,RMV) in
+  let [_ ⊢ mg-str2 RMV2 RMV3 MLT _ _] = merge_str2 [_ ⊢ RMV'] [_ ⊢ MG'] in
+  [_ ⊢ looknti RMV3]
+  ;
+% - - - - - - - - - - - - - - - - }%
+
+% Interaction with exchange
+
+LF mg_exch_exp : rmv _ _ _ _ _ _ → rmv _ _ _ _ _ _ → rmv _ _ _ _ _ _ → rmv _ _ _ _ _ _ → merge _ _ _ → type =
+  | mg-exch-exp :
+    rmv Δ₁ X A α₁ n Δ₁ₙ → rmv Δ₁'' Y B β₁ n' Δ₁ₙ → rmv Δ₁'' Y B β₁ m Δ₁ₘ → rmv Δ₁' X A α₁ m' Δ₁ₘ
+    → rmv Δ₂ X A α₂ n Δ₂ₙ → rmv Δ₂'' Y B β₂ n' Δ₂ₙ → rmv Δ₂'' Y B β₂ m Δ₂ₘ → rmv Δ₂' X A α₂ m' Δ₂ₘ
+    → • α₁ α₂ α → • β₁ β₂ β → merge Δ₁ₙ Δ₂ₙ Δₙ → merge Δ₁'' Δ₂'' Δ'' → merge Δ₁ₘ Δ₂ₘ Δₘ → merge Δ₁' Δ₂' Δ'
+    → {RMV1:rmv Δ X A α n Δₙ} {RMV2:rmv Δ'' Y B β n' Δₙ}
+    {RMV3:rmv Δ'' Y B β m Δₘ} {RMV4:rmv Δ' X A α m' Δₘ} {MG:merge Δ₁ Δ₂ Δ}
+    mg_exch_exp RMV1 RMV2 RMV3 RMV4 MG
+  ;
+
+rec merge_exch_exp : (Ψ:vctx)
+{RMV1:[Ψ ⊢ rmv Δ X A[] α[] n[] Δₙ]} {RMV2:[Ψ ⊢ rmv Δ'' Y B[] β[] n'[] Δₙ]}
+{RMV3:[Ψ ⊢ rmv Δ'' Y B[] β[] m[] Δₘ]} {RMV4:[Ψ ⊢ rmv Δ' X A[] α[] m'[] Δₘ]}
+{MG:[Ψ ⊢ merge Δ₁ Δ₂ Δ]}
+[Ψ ⊢ mg_exch_exp RMV1 RMV2 RMV3 RMV4 MG] =
+  / total /
+  mlam RMV1, RMV2, RMV3, RMV4, MG ⇒
+  let [_ ⊢ mg-str RMV1a RMV1b MLTa[] MGm _ _] = merge_str [_ ⊢ RMV1] [_ ⊢ MG] in
+  let [_ ⊢ _]:[_ ⊢ rmv _ _ _ _ n'[] _] = [_ ⊢ RMV2] in
+  let [_ ⊢ _]:[_ ⊢ rmv _ _ _ β[] m[] _] = [_ ⊢ RMV3] in
+  case comp_nats [ ⊢ n'] [ ⊢ m] of
+  | [ ⊢ comp_names/eq] ⇒
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV2] [_ ⊢ RMV3] in
+    let [_ ⊢ mg-weak RMV4a RMV4b MG' _ _ _] = merge_weak [_ ⊢ RMV4] [_ ⊢ MGm] [ ⊢ MLTa] in
+    (case [ ⊢ β] of
+    | [ ⊢ 𝟘 ] ⇒ ?
+      % let [_ ⊢ mg-weak RMV2a RMV2b MG3 _ _ _] = merge_weak [_ ⊢ RMV2] [_ ⊢ MGm] [ ⊢ •/us] in
+      % [_ ⊢ mg-exch-exp RMV1a RMV2a RMV2a RMV4a RMV1b RMV2b RMV2b RMV4b MLTa[] •/us MGm MG3 MGm MG' _ _ _ _ _]
+    | [ ⊢ 𝟙 ] ⇒ ?
+    %   let [_ ⊢ mg-weak RMV2a RMV2b MG3 _ _ _] = merge_weak [_ ⊢ RMV2] [_ ⊢ MGm] [ ⊢ •/a1] in
+    %   [_ ⊢ mg-exch-exp RMV1a RMV2a RMV2a RMV4a RMV1b RMV2b RMV2b RMV4b MLTa[] •/a1 MGm MG3 MGm MG' _ _ _ _ _]
+		    %
+    )
+  | [ ⊢ comp_names/neq NEQ] ⇒
+    % Extend diagram
+    let [_ ⊢ rmv-po RMV3' RMV2' IF2[] IF3[] _ _] = rmv_pushout_idx [_ ⊢ RMV2] [_ ⊢ RMV3] [ ⊢ NEQ] in
+    let [_ ⊢ rmv-ch RMV3'' RMV1' IF1[] IF3'[] _ _] = rmv_changeorder [_ ⊢ RMV1] [_ ⊢ RMV3'] in
+    let [_ ⊢ rmv-ch RMV2'' RMV4' IF4[] IF2'[] _ _] = rmv_changeorder [_ ⊢ RMV4] [_ ⊢ RMV2'] in
+    let [_ ⊢ rmv-pb RMV4'' RMV1'' IF1'[] IF4'[] _ _] = rmv_pullback [_ ⊢ RMV1'] [_ ⊢ RMV4'] in
+    % NW
+    let [_ ⊢ mg-str RMV3a'' RMV3b'' MLTb[] MGn' _ _] = merge_str [_ ⊢ RMV3''] [_ ⊢ MG] in
+    let [_ ⊢ mg-str RMV3a' RMV3b' MLTb'[] MGnm _ _] = merge_str [_ ⊢ RMV3'] [_ ⊢ MGm] in
+    let [_ ⊢ mg-str RMV1a' RMV1b' MLTa'[] _ _ _] = merge_str [_ ⊢ RMV1'] [_ ⊢ MGn'] in
+    let [_ ⊢ rmv-ch RMV3a_2'' RMV1a_2' IF1a[] IF3a'[] _ _] = rmv_changeorder [_ ⊢ RMV1a] [_ ⊢ RMV3a'] in
+    let [_ ⊢ rmv-ch RMV3b_2'' RMV1b_2' IF1b[] IF3b'[] _ _] = rmv_changeorder [_ ⊢ RMV1b] [_ ⊢ RMV3b'] in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (iflt_iflt_eq [ ⊢ IF1] [ ⊢ IF1a],iflt_iflt_eq [ ⊢ IF1] [ ⊢ IF1b]) in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (ifleq_ifleq_eq [ ⊢ IF3'] [ ⊢ IF3a'],ifleq_ifleq_eq [ ⊢ IF3'] [ ⊢ IF3b']) in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV3a''] [_ ⊢ RMV3a_2''] in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV3b''] [_ ⊢ RMV3b_2''] in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV1a'] [_ ⊢ RMV1a_2'] in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV1b'] [_ ⊢ RMV1b_2'] in
+    % NE
+    let [_ ⊢ mg-weak RMV4a' RMV4b' MGm' _ _ _] = merge_weak [_ ⊢ RMV4'] [_ ⊢ MGnm] [ ⊢ MLTa] in
+    let [_ ⊢ rmv-pb RMV4a'' RMV1a'' IF1a'[] IF4a'[] _ _] = rmv_pullback [_ ⊢ RMV1a'] [_ ⊢ RMV4a'] in
+    let [_ ⊢ rmv-pb RMV4b'' RMV1b'' IF1b'[] IF4b'[] _ _] = rmv_pullback [_ ⊢ RMV1b'] [_ ⊢ RMV4b'] in
+    let [_ ⊢ mg-weak RMV1a_2'' RMV1b_2'' MG''' _ _ _] = merge_weak [_ ⊢ RMV1''] [_ ⊢ MGm'] [ ⊢ MLTa] in
+    let [_ ⊢ mg-weak RMV4a_2'' RMV4b_2'' _ _ _ _] = merge_weak [_ ⊢ RMV4''] [_ ⊢ MGn'] [ ⊢ MLTa] in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (iflt_iflt_eq [ ⊢ IF1'] [ ⊢ IF1a'],iflt_iflt_eq [ ⊢ IF1'] [ ⊢ IF1b']) in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (ifleq_ifleq_eq [ ⊢ IF4'] [ ⊢ IF4a'],ifleq_ifleq_eq [ ⊢ IF4'] [ ⊢ IF4b']) in
+    let [_ ⊢ cx/refl] = str_lunq [_ ⊢ RMV1a_2''] [_ ⊢ RMV1a''] in
+    let [_ ⊢ cx/refl] = str_lunq [_ ⊢ RMV1b_2''] [_ ⊢ RMV1b''] in
+    let [_ ⊢ cx/refl] = str_lunq [_ ⊢ RMV4a_2''] [_ ⊢ RMV4a''] in
+    let [_ ⊢ cx/refl] = str_lunq [_ ⊢ RMV4b_2''] [_ ⊢ RMV4b''] in
+    % SW
+    let [_ ⊢ mg-weak RMV2a RMV2b MG'' _ _ _] = merge_weak [_ ⊢ RMV2] [_ ⊢ MGm] [ ⊢ MLTb] in
+    let [_ ⊢ mg-str RMV3a RMV3b MLTb''[] MGn _ _] = merge_str [_ ⊢ RMV3] [_ ⊢ MG''] in
+    let [_ ⊢ mg-str RMV2a' RMV2b' MLTb'''[] _ _ _] = merge_str [_ ⊢ RMV2'] [_ ⊢ MGn] in
+    let [_ ⊢ rmv-po RMV3a_2' RMV2a_2' IF2a[] IF3a[] _ _] = rmv_pushout_idx [_ ⊢ RMV2a] [_ ⊢ RMV3a] [ ⊢ NEQ] in
+    let [_ ⊢ rmv-po RMV3b_2' RMV2b_2' IF2b[] IF3b[] _ _] = rmv_pushout_idx [_ ⊢ RMV2b] [_ ⊢ RMV3b] [ ⊢ NEQ] in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (iflt_iflt_eq [ ⊢ IF2a] [ ⊢ IF2],iflt_iflt_eq [ ⊢ IF2b] [ ⊢ IF2]) in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (iflt_iflt_eq [ ⊢ IF3a] [ ⊢ IF3],iflt_iflt_eq [ ⊢ IF3b] [ ⊢ IF3]) in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV2a'] [_ ⊢ RMV2a_2'] in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV2b'] [_ ⊢ RMV2b_2'] in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV3a'] [_ ⊢ RMV3a_2'] in
+    let [_ ⊢ var-tp-mult-nat-lctx-refl] = str_runq_idx [_ ⊢ RMV3b'] [_ ⊢ RMV3b_2'] in
+    % SE
+    let [_ ⊢ mg-weak RMV4a RMV4b MG' _ _ _] = merge_weak [_ ⊢ RMV4] [_ ⊢ MGn] [ ⊢ MLTa] in
+    let [_ ⊢ rmv-ch RMV2a'' RMV4a_2' IF4a[] IF2a'[] _ _] = rmv_changeorder [_ ⊢ RMV4a] [_ ⊢ RMV2a'] in
+    let [_ ⊢ rmv-ch RMV2b'' RMV4b_2' IF4b[] IF2b'[] _ _] = rmv_changeorder [_ ⊢ RMV4b] [_ ⊢ RMV2b'] in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (iflt_iflt_eq [ ⊢ IF4] [ ⊢ IF4a],iflt_iflt_eq [ ⊢ IF4] [ ⊢ IF4b]) in
+    let ([ ⊢ nat/refl],[ ⊢ nat/refl]) = (ifleq_ifleq_eq [ ⊢ IF2'] [ ⊢ IF2a'],ifleq_ifleq_eq [ ⊢ IF2'] [ ⊢ IF2b']) in
+    let [_ ⊢ cx/refl] = str_lunq [_ ⊢ RMV4a'] [_ ⊢ RMV4a_2'] in
+    let [_ ⊢ cx/refl] = str_lunq [_ ⊢ RMV4b'] [_ ⊢ RMV4b_2'] in
+    % Conclusion
+    [_ ⊢ mg-exch-exp
+      RMV1a RMV2a RMV3a RMV4a RMV1b RMV2b RMV3b RMV4b
+      MLTa[] MLTb[] MGm MG'' MGn MG' _ _ _ _ _]
+  ;
+
+LF mg_exch : exch Δ X Y Δ' → merge Δ₁ Δ₂ Δ → type =
+  | mg-exch :
+    exch Δ₁ X Y Δ₁' → exch Δ₂ X Y Δ₂' → merge Δ₁' Δ₂' Δ'
+    → {EXC:exch Δ X Y Δ'} {MG:merge Δ₁ Δ₂ Δ}
+    mg_exch EXC MG
+  ;
+
+rec merge_exch : (Ψ:vctx)
+{EXC:[Ψ ⊢ exch Δ X Y Δ']} {MG:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} [Ψ ⊢ mg_exch EXC MG] =
+  mlam EXC, MG ⇒
+  let [_ ⊢ exchg RMVx1 RMVy1 RMVy2 RMVx2] = [_ ⊢ EXC] in
+  let [_ ⊢ mg-exch-exp RMVx1a RMVy1a RMVy2a RMVx2a
+    RMVx1b RMVy1b RMVy2b RMVx2b _ _ _ _ _ MG2 _ _ _ _ _] =
+    merge_exch_exp [_ ⊢ RMVx1] [_ ⊢ RMVy1] [_ ⊢ RMVy2] [_ ⊢ RMVx2] [_ ⊢ MG] in
+  [_ ⊢ mg-exch (exchg RMVx1a RMVy1a RMVy2a RMVx2a) (exchg RMVx1b RMVy1b RMVy2b RMVx2b) MG2 _ _]
+  ;
+
+%------------------------------------------------------%
+% Context membership
+%------------------------------------------------------%
+
+% X ∉ (Δ₁ ⋈ Δ₂) iff X ∉ Δ₁ (or Δ₂, by commutativity)
+
+rec notin_merge : (Ψ:vctx) ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → ([Ψ ⊢ lookup_n X Δ₁] → [ ⊢ false]) =
+  / total 3 /
+  fn NIN, MG, AP ⇒
+  let [_ ⊢ lookn RMV] = AP in
+  case [_ ⊢ RMV] of
+  | [_ ⊢ rmv/t LN1] ⇒
+    let [_ ⊢ mg/c MG1 _] = MG in
+    NIN (look_top [_ ⊢ _])
+  | [_ ⊢ rmv/n RMV1] ⇒
+    let [_ ⊢ mg/c MG1 _] = MG in
+    let [_ ⊢ mg-str2 _ RMV2 _ _ _ _] = merge_str2 [_ ⊢ RMV1] [_ ⊢ MG1] in
+    NIN [_ ⊢ lookn (rmv/n RMV2)]
+  ;
+
+rec notin_merge_l : (Ψ:vctx) ([Ψ ⊢ lookup_n X Δ₁] → [ ⊢ false]) → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) =
+  / total 3 /
+  fn NIN, MG, LK ⇒
+  let [_ ⊢ lookn RMV] = LK in
+  case [_ ⊢ RMV] of
+  | [_ ⊢ rmv/t LN1] ⇒
+    let [_ ⊢ mg/c MG1 _] = MG in
+    NIN (look_top [_ ⊢ _])
+  | [_ ⊢ rmv/n RMV1] ⇒
+    let [_ ⊢ mg/c MG1 _] = MG in
+    let [_ ⊢ mg-str RMV2 _ _ _ _ _] = merge_str [_ ⊢ RMV1] [_ ⊢ MG1] in
+    NIN [_ ⊢ lookn (rmv/n RMV2)]
+  ;
+
+%------------------------------------------------------%
+% Context well-formedness
+%------------------------------------------------------%
+
+% Wf [Ψ ⊢ Δ₁] iff Wf [Ψ ⊢ Δ₁ ⋈ Δ₂]
+
+rec wf_merge : Wf [Ψ ⊢ Δ] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → Wf [Ψ ⊢ Δ₁] =
+  / total wf (wf_merge _ _ _ _ wf _) /
+  fn WF, MG ⇒
+  case WF of
+  | Wf/n ⇒ let [_ ⊢ mg/n] = MG in Wf/n
+  | Wf/c WF1 NIN ⇒
+    let [_ ⊢ mg/c MG1 _] = MG in
+    Wf/c (wf_merge WF1 [_ ⊢ MG1]) (notin_merge NIN [_ ⊢ MG1])
+  ;
+
+rec wf_merge_r : Wf [Ψ ⊢ Δ] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → Wf [Ψ ⊢ Δ₂] =
+  / total /
+  fn WF, MG ⇒ wf_merge WF (merge_comm MG)
+  ;
+
+rec wf_merge_l : Wf [Ψ ⊢ Δ₁] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → Wf [Ψ ⊢ Δ] =
+  / total wf (wf_merge_l _ _ _ _ wf _) /
+  fn WF, MG ⇒
+  case WF of
+  | Wf/n ⇒ let [_ ⊢ mg/n] = MG in Wf/n
+  | Wf/c WF1 NIN ⇒
+    let [_ ⊢ mg/c MG1 _] = MG in
+    Wf/c (wf_merge_l WF1 [_ ⊢ MG1]) (notin_merge_l NIN [_ ⊢ MG1])
+  ;
+
+rec wf_merge2_r : Wf [Ψ ⊢ Δ₂] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → Wf [Ψ ⊢ Δ] =
+  / total /
+  fn WF, MG ⇒ wf_merge_l WF (merge_comm MG)
+  ;
+
+%------------------------------------------------------%
+% Useful corollaries
+%------------------------------------------------------%
+
+rec merge_pres_str :
+[Ψ ⊢ merge Δ₁ Δ₂ Δ]
+→ [Ψ ⊢ rmv Δ₁ X A₁ α₁ n₁ Δ₁'] → [Ψ ⊢ rmv Δ₂ X A₂ α₂ n₂ Δ₂'] → [Ψ ⊢ rmv Δ X A α n Δ']
+→ Wf [Ψ ⊢ Δ] → [Ψ ⊢ merge Δ₁' Δ₂' Δ'] =
+  / total /
+  fn MG, RMV1, RMV2, RMV, WF ⇒
+  let ([_ ⊢ MG'],[_ ⊢ RMV']) = (MG,RMV) in
+  let [_ ⊢ mg-str RMV1' RMV2' MLT1 MG1 _ _] = merge_str [_ ⊢ RMV'] [_ ⊢ MG'] in
+  let [_ ⊢ tp-mult-nat-lctx-refl] = str_runq RMV1 [_ ⊢ RMV1'] (wf_merge WF MG) in
+  let [_ ⊢ tp-mult-nat-lctx-refl] = str_runq RMV2 [_ ⊢ RMV2'] (wf_merge_r WF MG) in
+  [_ ⊢ MG1]
+  ;

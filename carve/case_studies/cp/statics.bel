@@ -1,0 +1,54 @@
+%======================================================%
+% Statics of CP
+%======================================================%
+
+LF oft : obj → lctx _ → type =
+
+| oft/fwd : 
+  dual A A'
+  → upd Δ _ Y Y A' A' 𝟙 𝟘 Δ' → upd Δ' _ X X A A 𝟙 𝟘 Δ'' → exh Δ''
+  → oft (fwd X Y) Δ
+
+| oft/close : 
+  upd Δ _ X X ① ① 𝟙 𝟘 Δ' → exh Δ'
+  → oft (close X) Δ
+
+| oft/wait : 
+  upd Δ _ X X ⊥ ⊥ 𝟙 𝟘 Δ'
+  → oft P Δ'
+  → oft (wait X P) Δ
+
+| oft/out : 
+  upd Δ₂ _ X X (A ⊗ B) (A ⊗ B) 𝟙 𝟘 Δ₂'
+  → merge Δ₁ Δ₂ Δ
+  → ({x:obj} oft (P x) (cons Δ₁ x A 𝟙))
+  → ({x:obj} oft (Q x) (cons Δ₂' x B 𝟙))
+  → oft (out X P Q) Δ
+
+| oft/inp :
+  upd Δ _ X X (A ⅋ B) (A ⅋ B) 𝟙 𝟘 Δ'
+  → ({y:obj} {x:obj} oft (P y x) (cons (cons Δ' y B 𝟙) x A 𝟙))
+  → oft (inp X P) Δ
+
+| oft/pcomp : 
+  dual A A'
+  → merge Δ₁ Δ₂ Δ
+  → ({x:obj} oft (P x) (cons Δ₁ x A 𝟙))
+  → ({x:obj} oft (Q x) (cons Δ₂ x A' 𝟙))
+  → oft (pcomp A P Q) Δ
+
+| oft/inl :
+  upd Δ _ X X (A ⊕ B) (A ⊕ B) 𝟙 𝟘 Δ'
+  → ({x:obj} oft (P x) (cons Δ' x A 𝟙))
+  → oft (inl X P) Δ
+
+| oft/inr :
+  upd Δ _ X X (A ⊕ B) (A ⊕ B) 𝟙 𝟘 Δ'
+  → ({x:obj} oft (P x) (cons Δ' x B 𝟙))
+  → oft (inr X P) Δ
+
+| oft/choice : 
+  upd Δ _ X X (A & B) (A & B) 𝟙 𝟘 Δ'
+  → ({x:obj} oft (P x) (cons Δ' x A 𝟙))
+  → ({x:obj} oft (Q x) (cons Δ' x B 𝟙))
+  → oft (choice X P Q) Δ;

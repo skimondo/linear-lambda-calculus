@@ -1,0 +1,22 @@
+%======================================================%
+% Theorems
+%======================================================%
+
+% Subject reduction
+
+rec tps : [ ⊢ eval η M W] → [ ⊢ hasty_env η Δ] → [ ⊢ oft Δ M T] → [ ⊢ hasty W T] =
+  / total 1 /
+  fn e, f, d ⇒ case e of
+  | [ ⊢ eval/var L] ⇒
+    let [ ⊢ oft/var U E] = d in
+    lookup_hasty f [ ⊢ U] [ ⊢ L]
+  | [ ⊢ eval/abs] ⇒
+  	let [ ⊢ F1] = f in
+    let [ ⊢ D] = d in
+    [ ⊢ hasty_closure D F1]
+  | [ ⊢ eval/app E1 E2 E3] ⇒
+    let [ ⊢ oft/app D D2 M] = d in
+    let [ ⊢ D2'] = tps [ ⊢ E2] (pres_hasty_env_r f [ ⊢ M]) [ ⊢ D2] in
+    let [ ⊢ hasty_closure (oft/abs Dabs) Denv] = tps [ ⊢ E1] (pres_hasty_env f [ ⊢ M]) [ ⊢ D] in
+    tps [ ⊢ E3] [ ⊢ hasty_env/c Denv D2'] [ ⊢ Dabs]
+  ;

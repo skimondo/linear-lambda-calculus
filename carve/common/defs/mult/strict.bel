@@ -1,0 +1,29 @@
+%======================================================%
+% Multiplicities (strict systems)
+%======================================================%
+
+LF mult : type =
+| 𝟙 : mult  % must be used at least once
+| ω : mult; % available unrestrictedly
+
+% α₁ • α₂ = α
+
+LF • : mult → mult → mult → type =
+| •/1ω : • 𝟙 ω 𝟙
+| •/ω1 : • ω 𝟙 𝟙
+| •/ωω : • ω ω ω;
+
+% α is unrestricted
+
+LF unr : mult → type =
+| unr/ω : unr ω;
+
+% α is an identity element w.r.t. •
+
+LF ident : mult → type =
+| ident/ω : ident ω;
+
+% α = α
+
+LF mult_eq : mult → mult → type =
+| mult/refl : mult_eq α α;

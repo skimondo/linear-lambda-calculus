@@ -1,0 +1,81 @@
+%======================================================%
+% Properties of addition
+%======================================================%
+
+% Addition is total
+
+LF getplus : nat → nat → type =
+| get-plus : plus n m l → getplus n m;
+
+rec plus_total : {n:[ ⊢ nat]} {m:[ ⊢ nat]} [ ⊢ getplus n m] =
+  / total 1 /
+  mlam n, m ⇒ case [ ⊢ n] of
+  | [ ⊢ zero] ⇒ [ ⊢ get-plus pl/z]
+  | [ ⊢ suc n'] ⇒
+    let [ ⊢ get-plus P] = plus_total [ ⊢ n'] [ ⊢ m] in
+    [ ⊢ get-plus (pl/s P)]
+  ;
+
+% Addition is functional
+
+rec plus_func : [ ⊢ plus n₁ n₂ n] → [ ⊢ plus n₁ n₂ n'] → [ ⊢ nat_eq n n'] =
+  / total 1 /
+  fn p1, p2 ⇒ case p1 of
+  | [ ⊢ pl/z] ⇒ let [ ⊢ pl/z] = p2 in [ ⊢ nat/refl]
+  | [ ⊢ pl/s P1] ⇒
+    let [ ⊢ pl/s P2] = p2 in
+    let [ ⊢ nat/refl] = plus_func [ ⊢ P1] [ ⊢ P2] in
+    [ ⊢ nat/refl]
+  ;
+
+% Addition is cancellative
+% (the case for n₁ can be obtained through commutativity, see plus_comm below)
+
+rec plus_canc : [ ⊢ plus n₁ n₂ n] → [ ⊢ plus n₁ n₂' n] → [ ⊢ nat_eq n₂ n₂'] =
+  / total 1 /
+  fn p1, p2 ⇒ case p1 of
+  | [ ⊢ pl/z] ⇒ let [ ⊢ pl/z] = p2 in [ ⊢ nat/refl]
+  | [ ⊢ pl/s P1] ⇒ let [ ⊢ pl/s P2] = p2 in plus_canc [ ⊢ P1] [ ⊢ P2]
+  ;
+
+% Symmetric case for pl/z: n + 0 = n
+
+rec plus_get_id : {n:[ ⊢ nat]} [ ⊢ plus n zero n] =
+  / total 1 /
+  mlam n ⇒ case [ ⊢ n] of
+  | [ ⊢ zero] ⇒ [ ⊢ pl/z]
+  | [ ⊢ suc n'] ⇒ let [ ⊢ P] = plus_get_id [ ⊢ n'] in [ ⊢ pl/s P]
+  ;
+
+% Symmetric case for pl/s: n₁ + n₂ = n implies n₁ + (n₂ + 1) = (n + 1)
+
+rec plus_suc_reverse : [ ⊢ plus n₁ n₂ n] → [ ⊢ plus n₁ (suc n₂) (suc n)] =
+  / total 1 /
+  fn p ⇒ case p of
+  | [ ⊢ pl/z] ⇒ [ ⊢ pl/z]
+  | [ ⊢ pl/s P1] ⇒ let [ ⊢ P2] = plus_suc_reverse [ ⊢ P1] in [ ⊢ pl/s P2]
+  ;
+
+% Addition is commutative
+
+rec plus_comm : [ ⊢ plus n₁ n₂ n] → [ ⊢ plus n₂ n₁ n] =
+  / total 1 /
+  fn p ⇒ case p of
+  | [ ⊢ pl/z] ⇒ plus_get_id [ ⊢ _]
+  | [ ⊢ pl/s P] ⇒ plus_suc_reverse (plus_comm [ ⊢ P])
+  ;
+
+% Addition is associative
+
+LF pl_assoc : plus _ _ _ → plus _ _ _ → type =
+| pl-assoc : plus n₂ n₃ n₂₃ → plus n₁ n₂₃ n → {P1:plus n₁ n₂ n₁₂} {P2:plus n₁₂ n₃ n} pl_assoc P1 P2;
+
+rec plus_assoc : {P1:[ ⊢ plus n₁ n₂ n₁₂]} {P2:[ ⊢ plus n₁₂ n₃ n]} [ ⊢ pl_assoc P1 P2] =
+  / total 1 /
+  mlam P1, P2 ⇒ case [ ⊢ P1] of
+  | [ ⊢ pl/z] ⇒ [ ⊢ pl-assoc P2 pl/z _ _]
+  | [ ⊢ pl/s P1'] ⇒
+    let [ ⊢ pl/s P2'] = [ ⊢ P2] in
+    let [ ⊢ pl-assoc P3 P4 _ _] = plus_assoc [ ⊢ P1'] [ ⊢ P2'] in
+    [ ⊢ pl-assoc P3 (pl/s P4) _ _]
+  ;

@@ -1,0 +1,122 @@
+%======================================================%
+% Algebraic properties of multiplicities
+% (linear / affine systems)
+%======================================================%
+
+% Remark: • is not total since 𝟙 • 𝟙 is undefined
+
+% Functionality: If α₁ ∙ α₂ = α and α₁ ∙ α₂ = α', then α = α'
+
+rec mult_func : [ ⊢ • α₁ α₂ α] → [ ⊢ • α₁ α₂ α'] → [ ⊢ mult_eq α α'] =
+  / total /
+  fn m1, m2 ⇒ case m1 of
+  | [ ⊢ •/us] ⇒ let [ ⊢ •/us] = m2 in [ ⊢ mult/refl]
+  | [ ⊢ •/a1] ⇒ let [ ⊢ •/a1] = m2 in [ ⊢ mult/refl]
+  | [ ⊢ •/a2] ⇒ let [ ⊢ •/a2] = m2 in [ ⊢ mult/refl]
+  ;
+
+% Identity: 
+% (1) If α₁ ∙ α₂ = α and α₁ is an identity element, then α₂ = α
+% (2) For any α, obtain an identity element β such that β • α = α
+
+rec mult_id : [ ⊢ • α₁ α₂ α] → [ ⊢ ident α₁] → [ ⊢ mult_eq α₂ α] =
+  / total 1 /
+  fn m, u ⇒
+  let [ ⊢ ident/0] = u in
+  case m of
+  | [ ⊢ •/us] ⇒ [ ⊢ mult/refl]
+  | [ ⊢ •/a2] ⇒ [ ⊢ mult/refl]
+  ;
+
+LF get_u∙ : mult → type =
+| get-u∙ : ident β → • β α α → get_u∙ α;
+
+rec mult_get_id : {α:[ ⊢ mult]} [ ⊢ get_u∙ α] =
+  / total /
+  mlam α ⇒ case [ ⊢ α] of
+  | [ ⊢ 𝟘] ⇒ [ ⊢ get-u∙ ident/0 •/us]
+  | [ ⊢ 𝟙] ⇒ [ ⊢ get-u∙ ident/0 •/a2]
+  ;
+
+% Zero-sum-freedom: If α₁ ∙ α₂ = α and α is an identity element, then α₁ = α
+
+rec mult_zsfree : [ ⊢ • α₁ α₂ α] → [ ⊢ ident α] → [ ⊢ mult_eq α₁ α] =
+  / total /
+  fn m, u ⇒ 
+  let [ ⊢ ident/0] = u in
+  let [ ⊢ •/us] = m in
+  [ ⊢ mult/refl]
+  ;
+
+% Commutativity: If α₁ ∙ α₂ = α, then α₂ ∙ α₁ = α
+
+rec mult_comm : [ ⊢ • α₁ α₂ α] → [ ⊢ • α₂ α₁ α] =
+  / total /
+  fn m ⇒ case m of
+  | [ ⊢ •/us] ⇒ [ ⊢ •/us]
+  | [ ⊢ •/a1] ⇒ [ ⊢ •/a2]
+  | [ ⊢ •/a2] ⇒ [ ⊢ •/a1]
+  ;
+
+% Associativity: If (α₁ • α₂) • α₃ = α, then α₁ • (α₂ • α₃) = α
+
+LF •assoc : • _ _ _ → • _ _ _ → type =
+  •/assoc : • α₂ α₃ α₂₃ → • α₁ α₂₃ α → {M1:• α₁ α₂ α₁₂} {M2:• α₁₂ α₃ α} •assoc M1 M2;
+
+rec mult_assoc : {M1:[ ⊢ • α₁ α₂ α₁₂]} {M2:[ ⊢ • α₁₂ α₃ α]} [ ⊢ •assoc M1 M2] =
+  / total 2 /
+  mlam M1, M2 ⇒ case [ ⊢ M2] of
+  | [ ⊢ •/us] ⇒ let [ ⊢ •/us] = [ ⊢ M1] in [ ⊢ •/assoc •/us •/us M1 M2]
+  | [ ⊢ •/a2] ⇒ let [ ⊢ •/us] = [ ⊢ M1] in [ ⊢ •/assoc •/a2 •/a2 M1 M2]
+  | [ ⊢ •/a1] ⇒ case [ ⊢ M1] of
+    | [ ⊢ •/a1] ⇒ [ ⊢ •/assoc •/us •/a1 M1 M2]
+    | [ ⊢ •/a2] ⇒ [ ⊢ •/assoc •/a1 •/a2 M1 M2]
+  ;
+
+% Cancellativity: If α₁ ∙ α₂ = α and α₁ ∙ α₂' = α, then α₂ = α₂'
+
+rec mult_canc : [ ⊢ • α₁ α₂ α] → [ ⊢ • α₁ α₂' α] → [ ⊢ mult_eq α₂ α₂'] =
+  / total /
+  fn m1, m2 ⇒ case m1 of
+  | [ ⊢ •/us] ⇒ let [ ⊢ •/us] = m2 in [ ⊢ mult/refl]
+  | [ ⊢ •/a1] ⇒ let [ ⊢ •/a1] = m2 in [ ⊢ mult/refl]
+  | [ ⊢ •/a2] ⇒ let [ ⊢ •/a2] = m2 in [ ⊢ mult/refl]
+  ;
+
+% Corollaries
+
+rec mult_id_cor : [ ⊢ • 𝟘 α₂ α] → [ ⊢ mult_eq α₂ α] =
+  / total /
+  fn m ⇒ mult_id m [ ⊢ ident/0]
+  ;
+
+rec mult_zsfree_cor : [ ⊢ • α₁ α₂ 𝟘] → [ ⊢ mult_eq α₁ 𝟘] =
+  / total /
+  fn m ⇒ mult_zsfree m [ ⊢ ident/0]
+  ;
+
+rec mult_get_id_cor : {α:[ ⊢ mult]} [ ⊢ • 𝟘 α α] =
+  / total /
+  mlam α ⇒ let [ ⊢ get-u∙ ident/0 M] = mult_get_id [ ⊢ α] in [ ⊢ M]
+  ;
+
+%------------------------------------------------------%
+% Properties of unrestricted elements
+%------------------------------------------------------%
+
+% Technical lemmas about unrestricted elements (used to prove context lemmas)
+
+rec mult_unr_id : [ ⊢ unr α] → [ ⊢ • α α α] =
+  / total /
+  fn u ⇒ let [ ⊢ unr/0] = u in [ ⊢ •/us]
+  ;
+
+rec mult_ident_unr : [ ⊢ ident α] → [ ⊢ unr α] =
+  / total /
+  fn u ⇒ let [ ⊢ ident/0] = u in [ ⊢ unr/0]
+  ;
+
+rec mult_unr_ident : [ ⊢ unr α] → [ ⊢ ident α] =
+  / total /
+  fn u ⇒ let [ ⊢ unr/0] = u in [ ⊢ ident/0]
+  ;

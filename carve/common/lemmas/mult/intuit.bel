@@ -1,0 +1,102 @@
+%======================================================%
+% Algebraic properties of multiplicities
+% (fully intuitionistic systems)
+%======================================================%
+
+% Totality: For any α₁, α₂, there exists an α such that α₁ ∙ α₂ = α
+
+LF get∙ : mult → mult → type =
+| get-∙ : • α₁ α₂ α → get∙ α₁ α₂;
+
+rec mult_total : {α₁:[ ⊢ mult]} {α₂:[ ⊢ mult]} [ ⊢ get∙ α₁ α₂] =
+  / total /
+  mlam α₁, α₂ ⇒
+  let [ ⊢ ω] = [ ⊢ α₁] in
+  let [ ⊢ ω] = [ ⊢ α₂] in
+  [ ⊢ get-∙ •/ω]
+  ;
+
+% Functionality: If α₁ ∙ α₂ = α and α₁ ∙ α₂ = α', then α = α'
+
+rec mult_func : [ ⊢ • α₁ α₂ α] → [ ⊢ • α₁ α₂ α'] → [ ⊢ mult_eq α α'] =
+  / total /
+  fn m1, m2 ⇒
+  let [ ⊢ •/ω] = m1 in
+  let [ ⊢ •/ω] = m2 in
+  [ ⊢ mult/refl]
+  ;
+
+% Identity: 
+% (1) If α₁ ∙ α₂ = α and α₁ is an identity element, then α₂ = α
+% (2) For any α, obtain an identity element β such that β • α = α
+
+rec mult_id : [ ⊢ • α₁ α₂ α] → [ ⊢ ident α₁] → [ ⊢ mult_eq α₂ α] =
+  / total /
+  fn m, _ ⇒ let [ ⊢ •/ω] = m in [ ⊢ mult/refl]
+  ;
+
+LF get_u∙ : mult → type =
+| get-u∙ : ident β → • β α α → get_u∙ α;
+
+rec mult_get_id : {α:[ ⊢ mult]} [ ⊢ get_u∙ α] =
+  / total /
+  mlam α ⇒ let [ ⊢ ω] = [ ⊢ α] in [ ⊢ get-u∙ ident/ω •/ω]
+  ;
+
+% Zero-sum-freedom: If α₁ ∙ α₂ = α and α is an identity element, then α₁ = α
+
+rec mult_zsfree : [ ⊢ • α₁ α₂ α] → [ ⊢ ident α] → [ ⊢ mult_eq α₁ α] =
+  / total /
+  fn m, _ ⇒ let [ ⊢ •/ω] = m in [ ⊢ mult/refl]
+  ;
+
+% Commutativity: If α₁ ∙ α₂ = α, then α₂ ∙ α₁ = α
+
+rec mult_comm : [ ⊢ • α₁ α₂ α] → [ ⊢ • α₂ α₁ α] =
+  / total /
+  fn M ⇒ let [ ⊢ •/ω] = M in [ ⊢ •/ω]
+  ;
+
+% Associativity: If (α₁ • α₂) • α₃ = α, then α₁ • (α₂ • α₃) = α
+
+LF •assoc : • _ _ _ → • _ _ _ → type =
+  •/assoc : • α₂ α₃ α₂₃ → • α₁ α₂₃ α → {M1:• α₁ α₂ α₁₂} {M2:• α₁₂ α₃ α} •assoc M1 M2;
+
+rec mult_assoc : {M1:[ ⊢ • α₁ α₂ α₁₂]} {M2:[ ⊢ • α₁₂ α₃ α]} [ ⊢ •assoc M1 M2] =
+  / total /
+  mlam M1, M2 ⇒
+  let [ ⊢ •/ω] = [ ⊢ M1] in
+  let [ ⊢ •/ω] = [ ⊢ M2] in
+  [ ⊢ •/assoc •/ω •/ω _ _]
+  ;
+
+% Cancellativity: If α₁ ∙ α₂ = α and α₁ ∙ α₂' = α, then α₂ = α₂'
+
+rec mult_canc : [ ⊢ • α₁ α₂ α] → [ ⊢ • α₁ α₂' α] → [ ⊢ mult_eq α₂ α₂'] =
+  / total /
+  fn m1, m2 ⇒
+  let [ ⊢ •/ω] = m1 in
+  let [ ⊢ •/ω] = m2 in
+  [ ⊢ mult/refl]
+  ;
+
+%------------------------------------------------------%
+% Properties of unrestricted elements
+%------------------------------------------------------%
+
+% Technical lemmas about unrestricted elements (used to prove context lemmas)
+
+rec mult_unr_id : [ ⊢ unr α] → [ ⊢ • α α α] =
+  / total /
+  fn u ⇒ let [ ⊢ unr/ω] = u in [ ⊢ •/ω]
+  ;
+
+rec mult_ident_unr : [ ⊢ ident α] → [ ⊢ unr α] =
+  / total /
+  fn u ⇒ let [ ⊢ ident/ω] = u in [ ⊢ unr/ω]
+  ;
+
+rec mult_unr_ident : [ ⊢ unr α] → [ ⊢ ident α] =
+  / total /
+  fn u ⇒ let [ ⊢ unr/ω] = u in [ ⊢ ident/ω]
+  ;

@@ -1,0 +1,244 @@
+%======================================================%
+% Properties of Wf predicate
+%======================================================%
+
+% Proving properties about well-formedness requires a series of auxilliary technical lemmas about
+% context membership like the following.
+
+rec look_top : (Ψ:ctx) {Δ:[Ψ ⊢ lctx N[]]} {X:[Ψ ⊢ obj]} {A:[ ⊢ tp]} {α:[ ⊢ mult]} [Ψ ⊢ lookup_n X (cons Δ X A[] α[])] =
+  / total /
+  mlam Δ, X, A, α ⇒ let [_ ⊢ U1] = refl_top [_ ⊢ Δ] [_ ⊢ X] [ ⊢ A] [ ⊢ α] in [_ ⊢ lookn U1]
+  ;
+
+%------------------------------------------------------%
+% Main properties of context well-formedness
+%------------------------------------------------------%
+
+% If Wf [Ψ ⊢ Δ] and x ∈ Δ, then x is a parameter variable from Ψ
+
+rec wf_isvar : Wf [Ψ ⊢ Δ] → [Ψ ⊢ upd Δ n[] X X' A A' α α' Δ'] → IsVar [Ψ ⊢ X] =
+  / total 2 /
+  fn wf, u ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒ let Wf/c _ _ = wf in Is-Var
+  | [_ ⊢ upd/n U1] ⇒ let Wf/c wf1 _ = wf in wf_isvar wf1 [_ ⊢ U1]
+  ;
+
+% Extend Wf judgment with new variable of type obj
+
+rec notin_ext : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) → ([Ψ,x:obj ⊢ lookup_n X[..] Δ[..]] → [ ⊢ false]) =
+  / total /
+  fn nin, ap ⇒
+  let [_,x:obj ⊢ lookn U] = ap in
+  let [_,x:obj ⊢ U'] = upd_refl [_,x:obj ⊢ U] in
+  let Prune-Upd [_ ⊢ U''] [_,x:obj ⊢ _] = prune_upd [_,x:obj ⊢ U'] in
+  nin [_ ⊢ lookn U'']
+  ;
+
+rec wf_ext : Wf [Ψ ⊢ Δ] → Wf [Ψ,x:obj ⊢ Δ[..]] =
+  / total 1 /
+  fn wf ⇒ case wf of
+  | Wf/n ⇒ Wf/n
+  | Wf/c wf1 nin ⇒ let wf2 = wf_ext wf1 in Wf/c wf2 (notin_ext nin)
+  ;
+
+% Strengthen LF context in Wf judgment
+
+rec notin_str : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ,x:obj ⊢ lookup_n X[..] Δ[..]] → [ ⊢ false]) → [Ψ ⊢ lookup_n X Δ] → [ ⊢ false] =
+  / total /
+  fn nin, ap ⇒
+  let [_,x:obj ⊢ lookn U] = ap in
+  nin [_,x:obj,y:obj ⊢ lookn U[..,x]]
+  ;
+
+rec wf_prune : Wf [Ψ,x:obj ⊢ Δ[..]] → Wf [Ψ ⊢ Δ] =
+  / total 1 /
+  fn wf ⇒ case wf of
+  | Wf/n ⇒ Wf/n
+  | Wf/c wf1 nin ⇒ let wf2 = wf_prune wf1 in Wf/c wf2 (notin_str nin)
+  ;
+
+% Extending a context with a fresh variable preserves VarCtx predicate
+
+rec notin_nil : (Ψ:ctx) [Ψ ⊢ lookup_n X nil] → [ ⊢ false] =
+  / total /
+  fn ap ⇒ let [_ ⊢ lookn U1] = ap in impossible [_ ⊢ U1]
+  ;
+
+rec notin_contra : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) [Ψ,x:obj ⊢ lookup_n x Δ[..]] → [ ⊢ false] =
+  / total /
+  fn ap ⇒ let [_,x:obj ⊢ lookn U1] = ap in upd_contra [_,x:obj ⊢ U1]
+  ;
+
+rec wf_extcons : Wf [Ψ ⊢ Δ] → Wf [Ψ,x:obj ⊢ cons Δ[..] x _ _] =
+  / total /
+  fn wf ⇒ case wf of
+  | Wf/n ⇒ Wf/c Wf/n notin_nil
+  | Wf/c wf1 nin ⇒ Wf/c (wf_ext wf) notin_contra
+  ;
+
+% Updating a variable's type and/or multiplicity preserves well-formedness
+
+rec notin_upd : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) → [Ψ ⊢ upd Δ n Y Y A B α β Δ'] → ([Ψ ⊢ lookup_n X Δ'] → [ ⊢ false]) =
+  / total /
+  fn nin, u, ap ⇒
+  let [_ ⊢ lookn U2] = ap in
+  let [_ ⊢ lookin U3] = lookup_changenmlab (upd_symm u) [_ ⊢ U2] in
+  nin [_ ⊢ lookn U3]
+  ;
+
+rec wf_upd : Wf [Ψ ⊢ Δ] → [Ψ ⊢ upd Δ _ X X _ _ _ _ Δ'] → Wf [Ψ ⊢ Δ'] =
+  / total g (wf_upd g _ _ _) /
+  fn wf, u ⇒ case wf of
+  | Wf/n ⇒ impossible u
+  | Wf/c wf1 nin ⇒
+    case u of
+    | [_ ⊢ upd/t _] ⇒ Wf/c wf1 nin
+    | [_ ⊢ upd/n U1] ⇒
+      let wf2 = wf_upd wf1 [_ ⊢ U1] in
+      Wf/c wf2 (notin_upd nin [_ ⊢ U1])
+ ;
+
+% Updating to a fresh name preserves well-formedness
+
+rec notin_peel : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ ⊢ lookup_n X (cons Δ Y B[] β[])] → [ ⊢ false]) → ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) =
+  / total /
+  fn nin, ap ⇒
+  let [_ ⊢ lookn U] = ap in
+  impossible nin [_ ⊢ lookn (upd/n U)]
+  ;
+
+rec notin_upd_neq : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ ⊢ lookup_n Z Δ] → [ ⊢ false]) → [Ψ ⊢ upd Δ n[] X Y A B α β Δ']
+→ ([Ψ ⊢ obj_eq Y Z] → [ ⊢ false]) → ([Ψ ⊢ lookup_n Z Δ'] → [ ⊢ false]) =
+  / total /
+  fn nin, u, n, ap ⇒
+  let [_ ⊢ lookn U2] = ap in
+  let [_ ⊢ lookintm U3] = lookup_upd (upd_symm u) [_ ⊢ U2] (lookup_neq_var2nat (upd_symm u) [_ ⊢ U2] n) in
+  nin [_ ⊢ lookn U3]
+  ;
+
+rec wf_upd_neq : Wf [Ψ ⊢ Δ] → [Ψ ⊢ upd Δ n[] X #q A B α β Δ'] → ([Ψ ⊢ lookup_n #q Δ] → [ ⊢ false]) → Wf [Ψ ⊢ Δ'] =
+  / total d (wf_upd_neq d) /
+  fn wf, u, nin ⇒
+  case (wf,u) of
+  | (Wf/n,[_ ⊢ _]) ⇒ impossible u
+  | (Wf/c wf1 nin1,[_ ⊢ upd/t _]) ⇒ Wf/c wf1 (notin_peel nin)
+  | (Wf/c wf1 nin1,[_ ⊢ upd/n U1]) ⇒
+    let [_ ⊢ U]:[Ψ ⊢ upd (cons _ Z4 _ _) _ W X4 _ _ _ _ _] = u in
+    (case comp_obj [_ ⊢ W] [_ ⊢ X4] of
+    | Ct-Eq ⇒ Wf/c (wf_upd wf1 [_ ⊢ U1]) (notin_upd nin1 [_ ⊢ U1])
+    | Ct-Neq NEQ1 ⇒
+      (case comp_obj [_ ⊢ X4] [_ ⊢ Z4] of
+      | Ct-Eq ⇒ impossible nin (look_top [_ ⊢ _] [_ ⊢ _] [ ⊢ _] [ ⊢ _])
+      | Ct-Neq NEQ2 ⇒ Wf/c (wf_upd_neq wf1 [_ ⊢ U1] (notin_peel nin)) (notin_upd_neq nin1 [_ ⊢ U1] NEQ2)
+      )
+    )
+  ;
+
+% Well-formedness is preserved under merges and splits
+
+rec notin_merge : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → ([Ψ ⊢ lookup_n X Δ₁] → [ ⊢ false]) =
+  / total /
+  fn nin, m, ap ⇒
+  let [_ ⊢ lookn U] = ap in
+  case [_ ⊢ U] of
+  | [_ ⊢ upd/t _] ⇒ let [_ ⊢ mg/c M1 _] = m in nin (look_top [_ ⊢ _] [_ ⊢ _] [ ⊢ _] [ ⊢ _])
+  | [_ ⊢ upd/n U1] ⇒
+    let [_ ⊢ mg/c M1 _] = m in
+    let [_ ⊢ merge-look2 _ U3 _ _ _] = merge_lookup2 [_ ⊢ U1] [_ ⊢ M1] in
+    nin [_ ⊢ lookn (upd/n U3)]
+  ;
+
+rec wf_merge : Wf [Ψ ⊢ Δ] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → Wf [Ψ ⊢ Δ₁] =
+  / total d (wf_merge d) /
+  fn wf, m ⇒ case wf of
+  | Wf/n ⇒ let [_ ⊢ mg/n] = m in Wf/n
+  | Wf/c wf1 nin ⇒
+    let [_ ⊢ mg/c M1 _] = m in
+    Wf/c (wf_merge wf1 [_ ⊢ M1]) (notin_merge nin [_ ⊢ M1])
+  ;
+
+rec notin_merge_l : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ ⊢ lookup_n X Δ₁] → [ ⊢ false]) → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) =
+  / total /
+  fn nin, m, lk ⇒
+  let [_ ⊢ lookn U] = lk in
+  case [_ ⊢ U] of
+  | [_ ⊢ upd/t _] ⇒ let [_ ⊢ mg/c M1 _] = m in nin (look_top [_ ⊢ _] [_ ⊢ _] [ ⊢ _] [ ⊢ _])
+  | [_ ⊢ upd/n U1] ⇒
+    let [_ ⊢ mg/c M1 _] = m in
+    let [_ ⊢ merge-look U2 _ _ _ _] = merge_lookup [_ ⊢ U1] [_ ⊢ M1] in
+    nin [_ ⊢ lookn (upd/n U2)]
+  ;
+
+rec wf_merge_l : Wf [Ψ ⊢ Δ₁] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → Wf [Ψ ⊢ Δ] =
+  / total d (wf_merge_l d) /
+  fn wf, m ⇒
+  case wf of
+  | Wf/n ⇒ let [_ ⊢ mg/n] = m in Wf/n
+  | Wf/c wf1 nin ⇒
+    let [_ ⊢ mg/c M1 _] = m in
+    Wf/c (wf_merge_l wf1 [_ ⊢ M1]) (notin_merge_l nin [_ ⊢ M1])
+  ;
+
+% Well-formedness is preserved under permutation
+
+rec notin_to_nmeq : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) ([Ψ ⊢ lookup_n Y Δ] → [ ⊢ false])
+→ [Ψ ⊢ upd Δ n[] X X' A[] A'[] α[] α'[] Δ'] → ([Ψ ⊢ obj_eq X Y] → [ ⊢ false]) =
+  / total /
+  fn nin, u, e ⇒
+  let ([_ ⊢ U],[_ ⊢ obj/refl]) = (u,e) in
+  nin [_ ⊢ lookn U]
+  ;
+
+rec notin_changename : [Ψ ⊢ upd Δ _ X Y _ _ _ _ Δ'] → Wf [Ψ ⊢ Δ] → ([Ψ ⊢ obj_eq X Y] → [ ⊢ false]) → ([Ψ ⊢ lookup_n X Δ'] → [ ⊢ false]) =
+  / total 1 /
+  fn u, wf, n, ap ⇒
+  let [_ ⊢ lookn U2] = ap in
+  case u of
+  | [_ ⊢ upd/t _] ⇒
+    let Wf/c wf1 nin = wf in
+    (case [_ ⊢ U2] of
+    | [_ ⊢ upd/t _] ⇒ n [_ ⊢ obj/refl]
+    | [_ ⊢ upd/n U2'] ⇒ nin [_ ⊢ lookn U2']
+    )
+  | [_ ⊢ upd/n U] ⇒
+    let Wf/c wf1 nin = wf in
+    case [_ ⊢ U2] of
+    | [_ ⊢ upd/t _] ⇒ nin [_ ⊢ lookn U]
+    | [_ ⊢ upd/n U2'] ⇒ notin_changename [_ ⊢ U] wf1 n [_ ⊢ lookn U2']
+  ;
+
+rec notin_exch : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]])  ([Ψ ⊢ lookup_n X Δ] → [ ⊢ false]) → [Ψ ⊢ exch Δ m Y k Z Δ'] → ([Ψ ⊢ lookup_n X Δ'] → [ ⊢ false]) =
+  / total /
+  fn nin, ex, ap ⇒
+  let [_ ⊢ lookn U1] = ap in
+  let [_ ⊢ look U2] = exch_lookup (exch_symm ex) [_ ⊢ U1] in
+  impossible nin [_ ⊢ lookn U2]
+  ;
+
+rec wf_exch : Wf [Ψ ⊢ Δ] → [Ψ ⊢ exch Δ n X m Y Δ'] → Wf [Ψ ⊢ Δ'] =
+  / total 1 /
+  fn wf, ex ⇒
+  let [_ ⊢ exch/u NEQ[] U1 U2] = ex in
+  case [_ ⊢ U1] of
+  | [_ ⊢ upd/t _] ⇒
+    let Wf/c wf1 nin = wf in
+    (case [_ ⊢ U2] of
+    | [_ ⊢ upd/t _] ⇒ impossible neq_irreflex [ ⊢ NEQ]
+    | [_ ⊢ upd/n U2'] ⇒
+      let Is-Var = wf_isvar wf1 [_ ⊢ U2'] in
+      let wf2 = wf_upd_neq wf1 [_ ⊢ U2'] nin in
+      let nin2 = notin_changename [_ ⊢ U2'] wf1 (notin_to_nmeq nin [_ ⊢ U2']) in
+      Wf/c wf2 nin2
+    )
+  | [_ ⊢ upd/n U1'] ⇒
+    let Wf/c wf1 nin = wf in
+    (case [_ ⊢ U2] of
+    | [_ ⊢ upd/t _] ⇒
+      let Is-Var = wf_isvar wf [_ ⊢ U1] in
+      let nin2 = notin_changename [_ ⊢ U1'] wf1 (notin_to_nmeq nin [_ ⊢ U1']) in
+      Wf/c (wf_upd_neq wf1 [_ ⊢ U1'] nin) nin2
+    | [_ ⊢ upd/n U2'] ⇒
+      let nin2 = notin_exch nin [_ ⊢ exch/u NEQ[] U1' U2'] in
+      Wf/c (wf_exch wf1 [_ ⊢ exch/u NEQ[] U1' U2']) nin2
+    )
+  ;

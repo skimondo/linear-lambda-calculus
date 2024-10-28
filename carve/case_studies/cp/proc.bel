@@ -1,0 +1,52 @@
+%======================================================%
+% CP / SCP processes
+%======================================================%
+
+% Processes as objects (using HOAS)
+
+LF obj : type =
+| fwd : obj → obj → obj
+| close : obj → obj
+| wait : obj → obj → obj
+| out : obj → (obj → obj) → (obj → obj) → obj
+| inp : obj → (obj → obj → obj) → obj
+| pcomp : tp → (obj → obj) → (obj → obj) → obj
+| inl : obj → (obj → obj) → obj
+| inr : obj → (obj → obj) → obj
+| choice : obj → (obj → obj) → (obj → obj) → obj;
+
+%------------------------------------------------------%
+% Appearance of variables in processes
+%------------------------------------------------------%
+
+% x ∈ P
+
+LF in_proc : obj → obj → type =
+| inpr/fwd_1 : in_proc X (fwd X Y)
+| inpr/fwd_2 : in_proc Y (fwd X Y)
+| inpr/close : in_proc X (close X)
+| inpr/wait_1 : in_proc X (wait X P)
+| inpr/wait_2 : in_proc Y P → in_proc Y (wait X P)
+| inpr/out_1 : in_proc X (out X P Q)
+| inpr/out_2 : ({x:obj} in_proc Y (P x)) → in_proc Y (out X P Q)
+| inpr/out_3 : ({x:obj} in_proc Y (Q x)) → in_proc Y (out X P Q)
+| inpr/inp_1 : in_proc X (inp X P)
+| inpr/inp_2 : ({x:obj} {y:obj} in_proc Y (P x y)) → in_proc Y (inp X P)
+| inpr/pcomp_1 : ({x:obj} in_proc X (P x)) → in_proc X (pcomp A P Q)
+| inpr/pcomp_2 : ({x:obj} in_proc X (Q x)) → in_proc X (pcomp A P Q)
+| inpr/inl_1 : in_proc X (inl X P)
+| inpr/inl_2' : ({x:obj} in_proc Y (P x)) → in_proc Y (inl X P)
+| inpr/inr_1 : in_proc X (inr X P)
+| inpr/inr_2 : ({x:obj} in_proc Y (P x)) → in_proc Y (inr X P)
+| inpr/choice_1 : in_proc X (choice X P Q)
+| inpr/choice_2 : ({x:obj} in_proc Y (P x)) → in_proc Y (choice X P Q)
+| inpr/choice_3 : ({x:obj} in_proc Y (Q x)) → in_proc Y (choice X P Q);
+
+%------------------------------------------------------%
+% Structural equivalences
+%------------------------------------------------------%
+
+LF ≡ : obj → obj → type =
+| ≡comm : dual A A' → ≡ (pcomp A P Q) (pcomp A' Q P)
+| ≡assoc : ≡ (pcomp B (\y.pcomp A P (\x.Q x y)) R) (pcomp A P (\x.pcomp B (Q x) R));
+--infix ≡ 11 left.

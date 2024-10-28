@@ -1,0 +1,37 @@
+%======================================================%
+% Further properties of objects
+% (assuming the type obj is uninhabited)
+%======================================================%
+
+% For any objects M and N, either M = N or M ≠ N
+
+rec comp_obj : (Ψ:ctx) {M:[Ψ ⊢ obj]} {N:[Ψ ⊢ obj]} CompareObjs [Ψ ⊢ M] [Ψ ⊢ N] =
+  mlam M, N ⇒
+  let [_ ⊢ #p] = [_ ⊢ M] in
+  let [Ψ ⊢ #q] = [_ ⊢ N] in
+  case [Ψ] of
+  | [ ] ⇒ impossible [ ⊢ M]
+  | [_,x:obj] ⇒
+    case [_,x:obj ⊢ M] of
+    | [_,x:obj ⊢ x] ⇒
+      (case [_,x:obj ⊢ N] of
+      | [_,x:obj ⊢ x] ⇒ Ct-Eq
+      | [_,x:obj ⊢ #q[..]] ⇒ Ct-Neq (fn e ⇒ impossible e)
+      )
+    | [_,x:obj ⊢ #p[..]] ⇒
+      case [_,x:obj ⊢ N] of
+      | [_,x:obj ⊢ x] ⇒ Ct-Neq (fn e ⇒ impossible e)
+      | [_,x:obj ⊢ #q[..]] ⇒ (case comp_obj [_ ⊢ #p] [_ ⊢ #q] of
+        | Ct-Eq ⇒ Ct-Eq
+        | Ct-Neq n ⇒ Ct-Neq (neq_weak_v n))
+  ;
+
+% If X is an object under the ambient context Ψ,y:obj and X ≠ y, then X is a parameter variable in Ψ
+
+rec prune_obj : {#p:#[Ψ,x:obj ⊢ obj]} ([Ψ,x:obj ⊢ obj_eq #p x] → [ ⊢ false]) → PruneObj [Ψ,x:obj ⊢ #p] =
+  / total /
+  mlam #p ⇒ fn n ⇒
+  case [_,x:obj ⊢ #p] of
+  | [_,x:obj ⊢ x] ⇒ impossible n [_,x:obj ⊢ obj/refl]
+  | [_,x:obj ⊢ #q[..]] ⇒ Prune-Obj
+  ;

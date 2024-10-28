@@ -1,0 +1,27 @@
+%======================================================%
+% Dynamics of the linear λ-calculus with an
+% environment-based operational semantics
+%======================================================%
+
+% Environments and values
+
+LF venv : nat → type =
+| empty : venv zero
+| vcons : venv N → val → venv (suc N)
+
+and LF val : type =
+| closure : venv _ → obj → val;
+
+% W ∈ₙ η
+
+LF lookup_venv : nat → val → venv _ → type =
+| vlook/t : {η:venv N} lookup_venv (suc N) W (vcons η W)
+| vlook/n : lookup_venv n W η → lookup_venv n W (vcons η W');
+
+% η, M ⇒ w, i.e., in environment η, expression M evaluates to value W
+
+LF eval : venv _ → obj → val → type =
+| eval/var : lookup_venv n W η → eval η (var n) W
+| eval/abs : eval η (abs M) (closure η (abs M))
+| eval/app : eval η M (closure η' (abs M')) → eval η N W'
+	→ eval (vcons η' W') M' W → eval η (app M N) W;

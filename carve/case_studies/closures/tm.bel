@@ -1,0 +1,10 @@
+%======================================================%
+% Terms
+%======================================================%
+
+% λ-calculus terms as objects (using de Bruijn)
+
+LF obj : type =
+| var : nat → obj
+| app : obj → obj → obj
+| abs : obj → obj;

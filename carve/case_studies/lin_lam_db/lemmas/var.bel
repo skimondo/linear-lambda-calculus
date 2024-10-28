@@ -1,0 +1,57 @@
+%------------------------------------------------------%
+% Properties of terms
+%------------------------------------------------------%
+
+rec var_x_lemma : (Ψ:ctx) [Ψ ⊢ var_eq #p 𝕏] → [ ⊢ false] =
+  fn EQ ⇒ impossible EQ
+  ;
+
+rec var_lookup_x : [ ⊢ upd _ _ X _ _ _ _ _ _] → [ ⊢ var_eq X 𝕏] =
+  / total /
+  fn UPD ⇒ let [ ⊢ _]:[ ⊢ upd _ _ 𝕏 _ _ _ _ _ _] = UPD in [ ⊢ var/refl]
+  ;
+
+% @TODO: missing cases?
+rec comp_vars : (Ψ:ctx) {M:[Ψ ⊢ var]} {N:[Ψ ⊢ var]} CompareVars [Ψ ⊢ M] [Ψ ⊢ N] =
+  %/ total p (comp_vars p) /
+  mlam M, N ⇒
+  case [_ ⊢ M] of
+  | [_ ⊢ #p] ⇒
+    (case [_ ⊢ N] of
+    | [Ψ ⊢ #q] ⇒
+      (case [Ψ] of
+      | [ ] ⇒ impossible [ ⊢ M]
+      | [_,x:var] ⇒
+        case [_,x:var ⊢ M] of
+        | [_,x:var ⊢ x] ⇒
+          (case [_,x:var ⊢ N] of
+          | [_,x:var ⊢ x] ⇒ Ct-Eq
+          | [_,x:var ⊢ #q[..]] ⇒ Ct-Neq (fn EQ ⇒ impossible EQ)
+          )
+        | [_,x:var ⊢ #p[..]] ⇒
+          (case [_,x:var ⊢ N] of
+          | [_,x:var ⊢ x] ⇒ Ct-Neq (fn EQ ⇒ impossible EQ)
+          | [_,x:var ⊢ #q[..]] ⇒
+            (case comp_vars [_ ⊢ #p] [_ ⊢ #q] of
+            | Ct-Eq ⇒ Ct-Eq
+            | Ct-Neq NEQ ⇒ Ct-Neq (neq_weak_v NEQ)
+            )
+          )
+        )
+    | [_ ⊢ 𝕏] ⇒ Ct-Neq var_x_lemma
+    )
+  | [_ ⊢ 𝕏] ⇒
+    case [_ ⊢ N] of
+    | [_ ⊢ #q] ⇒ Ct-Neq (neq_comm_v var_x_lemma)
+    | [_ ⊢ 𝕏] ⇒ Ct-Eq
+  ;
+
+% 'Prune' LF context to remove dependencies
+
+rec prune_var : {X:[Ψ,x:var ⊢ var]} ([Ψ,x:var ⊢ var_eq X x] → [ ⊢ false]) → PruneVar [Ψ,x:var ⊢ X] =
+  / total /
+  mlam M ⇒ fn NEQ ⇒ case [_,x:var ⊢ M] of
+  | [_,x:var ⊢ x] ⇒ impossible NEQ [_,x:var ⊢ var/refl]
+  | [_,x:var ⊢ #p[..]] ⇒ Prune-Var
+  | [_,x:var ⊢ 𝕏] ⇒ Prune-Var
+  ;

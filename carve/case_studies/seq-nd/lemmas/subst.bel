@@ -1,0 +1,115 @@
+%======================================================%
+% Properties of simultaneous substitution
+%======================================================%
+
+% If Δ ⊢ σ : Γ and exh(Γ), then exh(Δ)
+
+rec subst_exh : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) (Γ:[Ψ ⊢ lctx M[]]) [Ψ ⊢ wf_subst Δ σ Γ] → [Ψ ⊢ exh Γ] → [Ψ ⊢ exh Δ] =
+  / total 1 /
+  fn SUB, EXH ⇒ case SUB of
+  | [_ ⊢ wf_subst_empty EXH1] ⇒ [_ ⊢ EXH1]
+  | [_ ⊢ wf_subst_cons1 _ _ _] ⇒ 
+    let [_ ⊢ exh/c _ T[]] = EXH in
+    impossible [ ⊢ T]
+  | [_ ⊢ wf_subst_cons0 SUB1 _ _] ⇒
+  	let [_ ⊢ exh/c EXH1 _] = EXH in
+  	subst_exh [_ ⊢ SUB1] [_ ⊢ EXH1]
+  ;
+
+% If Δ ⊢ σ : Γ and Γ₁ ⋈ Γ₂ = Γ, then there exist Δ₁,Δ₂ such that
+% Δ₁ ⊢ σ : Γ₁, Δ₂ ⊢ σ : Γ₂, and Δ₁ ⋈ Δ₂ = Δ
+
+LF subst-merge : wf_subst _ _ _ → merge _ _ _ → type =
+  sub-mg : wf_subst Δ₁ σ Γ₁ → wf_subst Δ₂ σ Γ₂ → merge Δ₁ Δ₂ Δ
+  → {SUB:wf_subst Δ σ Γ} {M:merge Γ₁ Γ₂ Γ} subst-merge SUB M;
+
+rec subst_merge : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) (Γ:[Ψ ⊢ lctx M[]])
+{SUB:[Ψ ⊢ wf_subst Δ σ Γ]} {M:[Ψ ⊢ merge Γ₁ Γ₂ Γ]} [Ψ ⊢ subst-merge SUB M] =
+  / total 1 /
+  mlam SUB, M ⇒ case [_ ⊢ SUB] of
+  | [_ ⊢ wf_subst_empty E] ⇒
+    let [_ ⊢ mg/n] = [_ ⊢ M] in
+    let [_ ⊢ _]:[_ ⊢ exh Δ] = [_ ⊢ E] in
+    let [_ ⊢ merge-getid M1 _] = merge_getid [_ ⊢ Δ] in
+    let [_ ⊢ cx/refl] = merge_id [_ ⊢ M1] [_ ⊢ E] in
+    [_ ⊢ sub-mg (wf_subst_empty E) (wf_subst_empty E) M1 _ _]
+  | [_ ⊢ wf_subst_cons1 SUB1 CH1 M1] ⇒
+  	let [_ ⊢ mg/c M' MLT[]] = [_ ⊢ M] in
+  	let [_ ⊢ sub-mg SUB2 SUB3 M2 _ _] = subst_merge [_ ⊢ SUB1] [_ ⊢ M'] in
+  	(case [ ⊢ MLT] of
+  	| [ ⊢ •/a1] ⇒
+      let [_ ⊢ mg-assoc2 M3 M4 _ _] = merge_assoc_2 [_ ⊢ M1] [_ ⊢ M2] in
+      let [_ ⊢ SE] = same_elts_trans (merge_same_elts (merge_comm [_ ⊢ M2])) (merge_same_elts_cor [_ ⊢ M1]) in
+      [_ ⊢ sub-mg (wf_subst_cons1 SUB2 CH1 M3) (wf_subst_cons0 SUB3 CH1 SE) M4 _ _]
+  	| [ ⊢ •/a2] ⇒
+      let [_ ⊢ mg-assoc M3 M4 _ _] = merge_assoc [_ ⊢ M1] [_ ⊢ M2] in
+      let [_ ⊢ SE] = same_elts_trans (merge_same_elts [_ ⊢ M2]) (merge_same_elts_cor [_ ⊢ M1]) in
+      [_ ⊢ sub-mg (wf_subst_cons0 SUB2 CH1 SE) (wf_subst_cons1 SUB3 CH1 M3) M4 _ _]
+  	)
+  | [_ ⊢ wf_subst_cons0 SUB1 CH1 SE1] ⇒
+  	let [_ ⊢ mg/c M1 •/us] = [_ ⊢ M] in
+    let [_ ⊢ sub-mg SUB2 SUB3 M2 _ _] = subst_merge [_ ⊢ SUB1] [_ ⊢ M1] in
+    let [_ ⊢ SE2] = same_elts_trans (merge_same_elts [_ ⊢ M2]) [_ ⊢ SE1] in
+    let [_ ⊢ SE3] = same_elts_trans (merge_same_elts (merge_comm [_ ⊢ M2])) [_ ⊢ SE1] in
+  	[_ ⊢ sub-mg (wf_subst_cons0 SUB2 CH1 SE2) (wf_subst_cons0 SUB3 CH1 SE3) M2 _ _]
+  ;
+
+% If Δ ⊢ σ : Γ and Γ[(x :¹ A) ↦ (x :¹ 𝟘)] = Γ', then there exist e,Δ₁,Δ₂ such that
+% Δ₁ ⊢ σ : Γ', Δ₂ ⊢ e ⇐ A, and Δ₁ ⋈ Δ₂ = Δ
+
+LF subst-upd : wf_subst _ _ _ → upd _ _ _ _ _ _ _ _ _ → type =
+  sub-up : wf_subst Δ₁ σ Γ' → chk Δ₂ _ A → merge Δ₁ Δ₂ Δ
+  → {SUB:wf_subst Δ σ Γ} {U:upd Γ _ _ _ A A 𝟙 𝟘 Γ'} subst-upd SUB U;
+
+rec subst_upd : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) (Γ:[Ψ ⊢ lctx M[]])
+{SUB:[Ψ ⊢ wf_subst Δ σ Γ]} {U:[Ψ ⊢ upd Γ n[] X X' A[] A[] 𝟙 𝟘 Γ']} [Ψ ⊢ subst-upd SUB U] =
+  / total 1 /
+  mlam SUB, U ⇒ case [_ ⊢ SUB] of
+  | [_ ⊢ wf_subst_empty _] ⇒ impossible [_ ⊢ U]
+  | [_ ⊢ wf_subst_cons1 SUB1 CH1 M1] ⇒
+    (case [_ ⊢ U] of
+    | [_ ⊢ upd/t _] ⇒
+      let [_ ⊢ SE] = merge_same_elts_cor [_ ⊢ M1] in
+      [_ ⊢ sub-up (wf_subst_cons0 SUB1 CH1 SE) CH1 M1 _ _]
+    | [_ ⊢ upd/n U1] ⇒
+      let [_ ⊢ sub-up SUB2 CH2 M2 _ _] = subst_upd [_ ⊢ SUB1] [_ ⊢ U1] in
+      let [_ ⊢ mg-assoc2 M3 M4 _ _] = merge_assoc_2 [_ ⊢ M1] [_ ⊢ M2] in
+      [_ ⊢ sub-up (wf_subst_cons1 SUB2 CH1 M3) CH2 M4 _ _]
+    )
+  | [_ ⊢ wf_subst_cons0 SUB1 CH1 SE1] ⇒
+  	let [_ ⊢ upd/n U1] = [_ ⊢ U] in
+    let [_ ⊢ sub-up SUB2 CH2 M2 _ _] = subst_upd [_ ⊢ SUB1] [_ ⊢ U1] in
+    let [_ ⊢ SE2] = same_elts_trans (merge_same_elts [_ ⊢ M2]) [_ ⊢ SE1] in
+  	[_ ⊢ sub-up (wf_subst_cons0 SUB2 CH1 SE2) CH2 M2 _ _]
+  ;
+
+% If Δ ⊢ σ : Γ, then (Δ, x :⁰ A) ⊢ σ : Γ for any x,A
+
+rec subst_weak : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) (Γ:[Ψ ⊢ lctx M[]])
+[Ψ ⊢ wf_subst Δ σ Γ] → {X:[Ψ ⊢ obj]} {A:[ ⊢ tp]} [Ψ ⊢ wf_subst (cons Δ X A[] 𝟘) σ Γ] =
+  / total 1 /
+  fn SUB ⇒ mlam X, A ⇒ case SUB of
+  | [_ ⊢ wf_subst_empty E] ⇒ [_ ⊢ wf_subst_empty (exh/c E unr/0)]
+  | [_ ⊢ wf_subst_cons1 SUB1 CH1 M1] ⇒
+    let [_ ⊢ SUB1'] = subst_weak [_ ⊢ SUB1] [_ ⊢ X] [ ⊢ A] in
+    let [_ ⊢ CH1'] = chk_weak [_ ⊢ CH1] [_ ⊢ X] [ ⊢ A] in
+    [_ ⊢ wf_subst_cons1 SUB1' CH1' (mg/c M1 •/us)]
+  | [_ ⊢ wf_subst_cons0 SUB1 CH1 SE1] ⇒
+    let [_ ⊢ SUB1'] = subst_weak [_ ⊢ SUB1] [_ ⊢ X] [ ⊢ A] in
+    let [_ ⊢ CH1'] = chk_weak [_ ⊢ CH1] [_ ⊢ X] [ ⊢ A] in
+    [_ ⊢ wf_subst_cons0 SUB1' CH1' (se/c SE1)]
+  ;
+
+% If Δ ⊢ σ : Γ, then (Δ, x :α A) ⊢ (σ, x) : (Γ, x :α A) for any x,α,A
+
+rec subst_extend : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) (Γ:[Ψ ⊢ lctx M[]])
+[Ψ ⊢ wf_subst Δ σ Γ] → {X:[Ψ ⊢ obj]} {A:[ ⊢ tp]} {α:[ ⊢ mult]} [Ψ ⊢ wf_subst (cons Δ X A[] α[]) (scons σ X) (cons Γ X A[] α[])] =
+  / total /
+  fn SUB ⇒ mlam X, A, α ⇒
+  let [_ ⊢ SUB1]:[_ ⊢ wf_subst (cons Δ _ _ _) _ _] = subst_weak SUB [_ ⊢ X] [ ⊢ A] in
+  let [_ ⊢ merge-getid M E] = merge_getid [_ ⊢ Δ] in
+  let [_ ⊢ SE] = merge_same_elts_cor [_ ⊢ M] in
+  case [ ⊢ α] of
+  | [ ⊢ 𝟘] ⇒ [_ ⊢ wf_subst_cons0 SUB1 (conv (init (upd/t _) (exh/c E unr/0))) (se/c SE)]
+  | [ ⊢ 𝟙] ⇒ [_ ⊢ wf_subst_cons1 SUB1 (conv (init (upd/t _) (exh/c E unr/0))) (mg/c M •/a2)]
+  ;

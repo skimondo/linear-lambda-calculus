@@ -1,0 +1,40 @@
+%======================================================%
+% Properties of merge that only hold
+% if all unrestricted elements are identity elements
+%======================================================%
+
+% Identity properties:
+% (1) If Δ₁ ⋈ Δ₂ = Δ and exh(Δ₁), then Δ₂ = Δ
+% (2) If Δ₁ ⋈ Δ₂ = Δ and exh(Δ₂), then Δ₂ = Δ [corollary of (1) using commutativity]
+% (3) If Δ₁ ⋈ Δ₂ = Δ and exh(Δ), then Δ₁ = Δ₂ = Δ
+
+rec merge_id : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ exh Δ₁] → [Ψ ⊢ cx_eq Δ₂ Δ] =
+  / total 1 /
+  fn m, e ⇒ case m of
+  | [_ ⊢ mg/n] ⇒ [_ ⊢ cx/refl]
+  | [_ ⊢ mg/c M1 T1[]] ⇒
+    let [_ ⊢ exh/c E1 U1[]] = e in
+    let [_ ⊢ cx/refl] = merge_id [_ ⊢ M1] [_ ⊢ E1] in
+    let [ ⊢ mult/refl] = mult_id [ ⊢ T1] (mult_unr_ident [ ⊢ U1]) in
+    [_ ⊢ cx/refl]
+  ;
+
+rec merge_id_r : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ exh Δ₂] → [Ψ ⊢ cx_eq Δ₁ Δ] =
+  / total 1 /
+  fn m, e ⇒ merge_id (merge_comm m) e
+  ;
+
+LF merge_ident : merge _ _ _ → type =
+  mg_ident : {M:merge Δ Δ Δ} merge_ident M;
+
+rec merge_zsfree : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ exh Δ] → {M:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} [Ψ ⊢ merge_ident M] =
+  / total 1 /
+  fn e ⇒ mlam M ⇒ case [_ ⊢ M] of
+  | [_ ⊢ mg/n] ⇒ [_ ⊢ mg_ident _]
+  | [_ ⊢ mg/c M1 T1[]] ⇒
+    let [_ ⊢ exh/c E1 U1[]] = e in
+    let [ ⊢ mult/refl] = mult_zsfree [ ⊢ T1] (mult_unr_ident [ ⊢ U1]) in
+    let [ ⊢ mult/refl] = mult_zsfree (mult_comm [ ⊢ T1]) (mult_unr_ident [ ⊢ U1]) in
+    let [_ ⊢ mg_ident _] = merge_zsfree [_ ⊢ E1] [_ ⊢ M1] in
+    [_ ⊢ mg_ident _]
+  ;

@@ -1,0 +1,29 @@
+%======================================================%
+% Multiplicities (linear / affine systems)
+%======================================================%
+
+LF mult : type =
+| 𝟘 : mult  % used
+| 𝟙 : mult; % available once
+
+% α₁ • α₂ = α
+
+LF • : mult → mult → mult → type =
+| •/us : • 𝟘 𝟘 𝟘
+| •/a1 : • 𝟙 𝟘 𝟙
+| •/a2 : • 𝟘 𝟙 𝟙;
+
+% α is unavilable/consumed
+
+LF unr : mult → type =
+| unr/0 : unr 𝟘;
+
+% α is an identity element w.r.t. •
+
+LF ident : mult → type =
+| ident/0 : ident 𝟘;
+
+% α = α
+
+LF mult_eq : mult → mult → type =
+| mult/refl : mult_eq α α;

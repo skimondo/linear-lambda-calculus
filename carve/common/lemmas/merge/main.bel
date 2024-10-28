@@ -1,0 +1,219 @@
+%======================================================%
+% Properties of context merge
+%======================================================%
+
+%------------------------------------------------------%
+% Basic properties of judgment
+%------------------------------------------------------%
+
+% "Prune" LF context to remove dependencies:
+% (1) Obtain from [Ψ,x:obj ⊢ merge Δ₁ Δ₂ Δ[..]] that neither Δ₁ nor Δ₂ depend on x
+% (2) Obtain from [Ψ,x:obj ⊢ merge Δ₁[..] Δ₂ Δ] that neither Δ₂ nor Δ depend on x
+
+inductive PruneMerge : (Ψ:ctx) (Δ:[Ψ,x:obj ⊢ lctx N[]]) {M:[Ψ,x:obj ⊢ merge Δ₁ Δ₂ Δ]} ctype =
+  | Prune-Merge : [Ψ ⊢ merge Δ₁ Δ₂ Δ]
+    → {M:[Ψ,x:obj ⊢ merge Δ₁[..] Δ₂[..] Δ[..]]} PruneMerge [Ψ,x:obj ⊢ M];
+
+rec prune_merge : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {M:[Ψ,x:obj ⊢ merge Δ₁ Δ₂ Δ[..]]} PruneMerge [Ψ,x:obj ⊢ M] =
+  / total 1 /
+  mlam M ⇒ case [_,x:obj ⊢ M] of
+  | [_,x:obj ⊢ mg/n] ⇒ Prune-Merge [_ ⊢ mg/n] [_,x:obj ⊢ _]
+  | [_,x:obj ⊢ mg/c M1 T[]] ⇒
+    let Prune-Merge [_ ⊢ M1'] [_,x:obj ⊢ _] = prune_merge [_,x:obj ⊢ M1] in
+    Prune-Merge [_ ⊢ mg/c M1' T[]] [_,x:obj ⊢ _]
+  ;
+
+rec prune_merge_l : (Ψ:ctx) (Δ₁:[Ψ ⊢ lctx N[]]) {M:[Ψ,x:obj ⊢ merge Δ₁[..] Δ₂ Δ]} PruneMerge [Ψ,x:obj ⊢ M] =
+  / total 1 /
+  mlam M ⇒ case [_,x:obj ⊢ M] of
+  | [_,x:obj ⊢ mg/n] ⇒ Prune-Merge [_ ⊢ mg/n] [_,x:obj ⊢ _]
+  | [_,x:obj ⊢ mg/c M1 T[]] ⇒
+    let Prune-Merge [_ ⊢ M1'] [_,x:obj ⊢ _] = prune_merge_l [_,x:obj ⊢ M1] in
+    Prune-Merge [_ ⊢ mg/c M1' T[]] [_,x:obj ⊢ _]
+  ;
+
+%------------------------------------------------------%
+% Algebraic properties
+%------------------------------------------------------%
+
+% Functionality: If Δ₁ ⋈ Δ₂ = Δ and Δ₁ ⋈ Δ₂ = Δ', then Δ = Δ'
+
+rec merge_func : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ merge Δ₁ Δ₂ Δ'] → [Ψ ⊢ cx_eq Δ Δ'] =
+  / total 1 /
+  fn mg1, mg2 ⇒ case mg1 of
+  | [_ ⊢ mg/n] ⇒ let [_ ⊢ mg/n] = mg2 in [_ ⊢ cx/refl]
+  | [_ ⊢ mg/c M1 T1[]] ⇒
+    let [_ ⊢ mg/c M2 T2[]] = mg2 in
+    let [_ ⊢ cx/refl] = merge_func [_ ⊢ M1] [_ ⊢ M2] in
+    let [ ⊢ mult/refl] = mult_func [ ⊢ T1] [ ⊢ T2] in
+    [_ ⊢ cx/refl]
+  ;
+
+% Commutativity: If Δ₁ ⋈ Δ₂ = Δ, then Δ₂ ⋈ Δ₁ = Δ
+
+rec merge_comm : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ merge Δ₂ Δ₁ Δ] =
+  / total 1 /
+  fn m ⇒ case m of
+  | [_ ⊢ mg/n] ⇒ [_ ⊢ mg/n]
+  | [_ ⊢ mg/c M1 T1[]] ⇒
+    let [_ ⊢ M2] = merge_comm [_ ⊢ M1] in
+    let [ ⊢ T2] = mult_comm [ ⊢ T1] in
+    [_ ⊢ mg/c M2 T2[]]
+  ;
+
+% Existence of identity context, i.e., Δ ⋈ 0Δ = Δ for any Δ
+
+LF mg_getid : lctx _ → type =
+| merge-getid : merge Δ Δ' Δ → exh Δ' → mg_getid Δ;
+
+rec merge_getid : (Ψ:ctx) {Δ:[Ψ ⊢ lctx N[]]} [Ψ ⊢ mg_getid Δ] =
+  / total 1 /
+  mlam Δ ⇒ case [_ ⊢ Δ] of
+  | [_ ⊢ nil] ⇒ [_ ⊢ merge-getid mg/n exh/n]
+  | [_ ⊢ cons Δ' _ _ α[]] ⇒
+    let [_ ⊢ merge-getid M EXH] = merge_getid [_ ⊢ Δ'] in
+    let [ ⊢ get-u∙ U1 T1] = mult_get_id [ ⊢ α] in
+    let [ ⊢ T2] = mult_comm [ ⊢ T1] in
+    let [ ⊢ U2] = mult_ident_unr [ ⊢ U1] in
+    [_ ⊢ merge-getid (mg/c M T2[]) (exh/c EXH U2[])]
+  ;
+
+% Associativity
+% (1) If (Δ₁ ⋈ Δ₂) ⋈ Δ₃ = Δ, then Δ₁ ⋈ (Δ₂ ⋈ Δ₃)
+% (2) If (Δ₁ ⋈ Δ₂) ⋈ Δ₃ = Δ, then (Δ₁ ⋈ Δ₃) ⋈ Δ₂ [corollary of (1) using commutativity]
+
+LF mg_assoc : merge _ _ _ → merge _ _ _ → type =
+  mg-assoc : merge Δ₂ Δ₃ Δ₂₃ → merge Δ₁ Δ₂₃ Δ → {M1:merge Δ₁₂ Δ₃ Δ} {M2:merge Δ₁ Δ₂ Δ₁₂} mg_assoc M1 M2;
+
+rec merge_assoc : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {M1:[Ψ ⊢ merge Δ₁₂ Δ₃ Δ]} {M2:[Ψ ⊢ merge Δ₁ Δ₂ Δ₁₂]} [Ψ ⊢ mg_assoc M1 M2] =
+  / total 1 /
+  mlam M1, M2 ⇒ case [_ ⊢ M1] of
+  | [_ ⊢ mg/n] ⇒ let [_ ⊢ mg/n] = [_ ⊢ M2] in [_ ⊢ mg-assoc mg/n mg/n _ _]
+  | [_ ⊢ mg/c M1' T1[]] ⇒
+    let [_ ⊢ mg/c M2' T2[]] = [_ ⊢ M2] in
+    let [_ ⊢ mg-assoc M3 M4 _ _] = merge_assoc [_ ⊢ M1'] [_ ⊢ M2'] in
+    let [ ⊢ •/assoc T3 T4 _ _] = mult_assoc [ ⊢ T2] [ ⊢ T1] in
+    [_ ⊢ mg-assoc (mg/c M3 T3[]) (mg/c M4 T4[]) _ _]
+  ;
+
+LF mg_assoc2 : merge _ _ _ → merge _ _ _ → type =
+  mg-assoc2 :  merge Δ₁ Δ₃ Δ₁₃ → merge Δ₁₃ Δ₂ Δ → {M1:merge Δ₁₂ Δ₃ Δ} {M2:merge Δ₁ Δ₂ Δ₁₂} mg_assoc2 M1 M2;
+
+rec merge_assoc_2 : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {M1:[Ψ ⊢ merge Δ₁₂ Δ₃ Δ]} {M2:[Ψ ⊢ merge Δ₁ Δ₂ Δ₁₂]} [Ψ ⊢ mg_assoc2 M1 M2] =
+  / total /
+  mlam M1, M2 ⇒
+  let [_ ⊢ M2_comm] = merge_comm [_ ⊢ M2] in
+  let [_ ⊢ mg-assoc M3 M4 _ _] = merge_assoc [_ ⊢ M1] [_ ⊢ M2_comm] in
+  let [_ ⊢ M4_comm] = merge_comm [_ ⊢ M4] in
+  [_ ⊢ mg-assoc2 M3 M4_comm _ _]
+  ;
+
+%------------------------------------------------------%
+% Interaction with update
+%------------------------------------------------------%
+
+% Preservation of lookup under merge:
+% (1) If (x :α A) ∈ₙ (Δ₁ ⋈ Δ₂), then (x :α₁ A) ∈ₙ Δ₁ and (x :α₂ A) ∈ₙ Δ₂ for some α₁,α₂ such that α₁ ∙ α₂ = α
+% (2) If (x :α₁ A) ∈ₙ Δ₁ and Δ₁ ⋈ Δ₂ = Δ, then (x :α₂ A) ∈ₙ Δ₂, (x :α A) ∈ₙ Δ for α₁,α₂ such that α₁ ∙ α₂ = α
+
+LF merge_look : upd Δ _ _ _ _ _ _ _ _ → merge _ _ Δ → type =
+  merge-look : upd Δ₁ n X _ A _ α₁ _ _ → upd Δ₂ n X _ A _ α₂ _ _ → • α₁ α₂ α → {U:upd Δ n X _ A _ α _ _} {M:merge Δ₁ Δ₂ Δ} merge_look U M;
+
+rec merge_lookup : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {U:[Ψ ⊢ upd Δ n X X' A A' α α' Δ']} {M:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} [_ ⊢ merge_look U M] =
+  / total 1 /
+  mlam U, M ⇒ case [_ ⊢ U] of
+  | [_ ⊢ upd/t _] ⇒
+    let [_ ⊢ mg/c M1 MW]:[_ ⊢ merge (cons Δ₁ _ _ α₁[]) (cons Δ₂ X A[] α₂[]) _] = [_ ⊢ M] in
+    let [_ ⊢ U1] = refl_top [_ ⊢ Δ₁] [_ ⊢ X] [ ⊢ A] [ ⊢ α₁] in
+    let [_ ⊢ U2] = refl_top [_ ⊢ Δ₂] [_ ⊢ X] [ ⊢ A] [ ⊢ α₂] in
+    [_ ⊢ merge-look U1 U2 MW _ _]
+  | [_ ⊢ upd/n U1] ⇒
+    let [_ ⊢ mg/c M1 _] = [_ ⊢ M] in
+    let [_ ⊢ merge-look U2 U3 LB _ _] = merge_lookup [_ ⊢ U1] [_ ⊢ M1] in
+    [_ ⊢ merge-look (upd/n U2) (upd/n U3) LB _ _]
+  ;
+
+LF merge_look2 : upd Δ _ _ _ _ _ _ _ _ → merge Δ _ _ → type =
+  merge-look2 : upd Δ₂ n X _ A _ α₂ _ _ → upd Δ n X _ A _ α _ _ → • α₁ α₂ α → {U:upd Δ₁ n X _ A _ α₁ _ _} {M:merge Δ₁ Δ₂ Δ} merge_look2 U M;
+
+rec merge_lookup2 : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {U:[Ψ ⊢ upd Δ₁ n X X' A A' α α' Δ₁']} {M:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} [_ ⊢ merge_look2 U M] =
+  / total 1 /
+  mlam U, M ⇒ case [_ ⊢ U] of
+  | [_ ⊢ upd/t _] ⇒
+    let [_ ⊢ mg/c M1 MW]:[_ ⊢ merge _ (cons Δ₂ _ _ α₂[]) (cons Δ X A[] α[])] = [_ ⊢ M] in
+    let [_ ⊢ U2] = refl_top [_ ⊢ Δ₂] [_ ⊢ X] [ ⊢ A] [ ⊢ α₂] in
+    let [_ ⊢ U3] = refl_top [_ ⊢ Δ] [_ ⊢ X] [ ⊢ A] [ ⊢ α] in
+    [_ ⊢ merge-look2 U2 U3 MW _ _]
+  | [_ ⊢ upd/n U1] ⇒
+    let [_ ⊢ mg/c M1 _] = [_ ⊢ M] in
+    let [_ ⊢ merge-look2 U2 U3 T _ _] = merge_lookup2 [_ ⊢ U1] [_ ⊢ M1] in
+    [_ ⊢ merge-look2 (upd/n U2) (upd/n U3) T _ _]
+  ;
+
+% Distributivity of updating over ⋈:
+% Δ₁[x :α₁ A ↦ₙ x' :β₁ B] ⋈ Δ₂[x :α₂ A ↦ₙ x' :β₂ B] = (Δ₁ ⋈ Δ₂)[x :(α₁•α₂) A ↦ₙ x' :(β₁•β₂) B]
+
+rec merge_upd : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ upd Δ₁ n X X' A B α₁ β₁[] Δ₁'] → [Ψ ⊢ upd Δ₂ n X X' A B α₂ β₂[] Δ₂'] → [Ψ ⊢ upd Δ n X X' A B α β[] Δ'] 
+→ [ ⊢ • β₁ β₂ β] → [Ψ ⊢ merge Δ₁' Δ₂' Δ'] =
+  / total 4 /
+  fn m, u1, u2, u, t ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒
+    let [_ ⊢ mg/c M1 _] = m in
+    (case (u1,u2) of
+    | ([_ ⊢ upd/t _],[_ ⊢ upd/t _]) ⇒ let [ ⊢ T] = t in [_ ⊢ mg/c M1 T[]]
+    | ([_ ⊢ upd/n U1],[_ ⊢ _]) ⇒ impossible len_upd_contra [_ ⊢ U1]
+    | ([_ ⊢ _],[_ ⊢ upd/n U2]) ⇒ impossible len_upd_contra [_ ⊢ U2]
+    )
+  | [_ ⊢ upd/n U] ⇒
+    let [_ ⊢ mg/c M1 T1[]] = m in
+    (case (u1,u2) of
+    | ([_ ⊢ upd/t _],[_ ⊢ _]) ⇒ impossible len_upd_contra [_ ⊢ U]
+    | ([_ ⊢ _],[_ ⊢ upd/t _]) ⇒ impossible len_upd_contra [_ ⊢ U]
+    | ([_ ⊢ upd/n U1],[_ ⊢ upd/n U2]) ⇒
+      let [_ ⊢ M2] = merge_upd [_ ⊢ M1] [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ U] t in
+      [_ ⊢ mg/c M2 T1[]]
+    )
+  ;
+
+%------------------------------------------------------%
+% Useful corollaries
+%------------------------------------------------------%
+
+% (1) If Δ[x :α A ↦ₙ x' :α' A'] = Δ' and Δ₁ ⋈ Δ₂ = Δ, then for any α₁',α₂' with α₁' ∙ α₂' = α',
+%     there exist α₁,α₂,Δ₁',Δ₂' such that α₁ ∙ α₂ = α, Δ₁[x :α₁ A ↦ₙ x' :α₁' A'] = Δ₁',
+%     Δ₂[x :α₂ A ↦ₙ x' :α₂' A'] = Δ₂', and Δ₁' ⋈ Δ₂' = Δ'
+% (2) Same but starting with Δ₁ (or Δ₂ using commutativity)
+
+LF merge_upd_c : upd Δ _ _ _ _ _ _ α _ → merge _ _ Δ → • _ _ α → type =
+  merge-upd : upd Δ₁ n X X' A A' α₁ α₁' Δ₁' → upd Δ₂ n X X' A A' α₂ α₂' Δ₂'
+    → • α₁ α₂ α → merge Δ₁' Δ₂' Δ'
+    → {U:upd Δ n X X' A A' α α' Δ'} {M:merge Δ₁ Δ₂ Δ} {T:• α₁' α₂' α'} merge_upd_c U M T;
+
+rec merge_upd_cor : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {U:[Ψ ⊢ upd Δ n X X' A[] A'[] α[] α'[] Δ']} {M:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} {T:[ ⊢ • α₁' α₂' α']} [_ ⊢ merge_upd_c U M T[]] =
+  / total 1 /
+  mlam U, M, T ⇒
+  let [_ ⊢ _]:[_ ⊢ upd _ n _ X' _ A'[] _ _ _] = [_ ⊢ U] in
+  let [ ⊢ _]:[ ⊢ • α₁' α₂' _] = [ ⊢ T] in
+  let [_ ⊢ merge-look U1' U2' T1[] _ _] = merge_lookup [_ ⊢ U] [_ ⊢ M] in
+  let [_ ⊢ get-upd U1] = lookup_getupd [_ ⊢ U1'] [_ ⊢ X'] [ ⊢ A'] [ ⊢ α₁'] in
+  let [_ ⊢ get-upd U2] = lookup_getupd [_ ⊢ U2'] [_ ⊢ X'] [ ⊢ A'] [ ⊢ α₂'] in
+  let [_ ⊢ M2] = merge_upd [_ ⊢ M] [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ U] [ ⊢ T] in
+  [_ ⊢ merge-upd U1 U2 T1[] M2 _ _ _]
+  ;
+
+LF merge_upd_c2 : upd Δ _ _ _ _ _ _ α _ → merge Δ _ _ → • α _ _ → type =
+  merge-upd2 : upd Δ₂ n X X' A A' α₂ α₂' Δ₂' → upd Δ n X X' A A' α α' Δ'
+    → • α₁ α₂ α → merge Δ₁' Δ₂' Δ'
+    → {U:upd Δ₁ n X X' A A' α₁ α₁' Δ₁'} {M:merge Δ₁ Δ₂ Δ} {T:• α₁' α₂' α'} merge_upd_c2 U M T;
+
+rec merge_upd_cor2 : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {U:[Ψ ⊢ upd Δ₁ n[] X X' A[] A'[] α₁[] α₁'[] Δ₁']} {M:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} {T:[ ⊢ • α₁' α₂' α']} [_ ⊢ merge_upd_c2 U M T[]] =
+  / total 1 /
+  mlam U1, M, T ⇒
+  let [_ ⊢ _]:[_ ⊢ upd _ n _ X' _ A'[] _ _ _] = [_ ⊢ U1] in
+  let [ ⊢ _]:[ ⊢ • _ α₂' α'] = [ ⊢ T] in
+  let [_ ⊢ merge-look2 U2' U' T1[] _ _] = merge_lookup2 [_ ⊢ U1] [_ ⊢ M] in
+  let [_ ⊢ get-upd U2] = lookup_getupd [_ ⊢ U2'] [_ ⊢ X'] [ ⊢ A'] [ ⊢ α₂'] in
+  let [_ ⊢ get-upd U] = lookup_getupd [_ ⊢ U'] [_ ⊢ X'] [ ⊢ A'] [ ⊢ α'] in
+  let [_ ⊢ M2] = merge_upd [_ ⊢ M] [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ U] [ ⊢ T] in
+  [_ ⊢ merge-upd2 U2 U T1[] M2 _ _ _]
+  ;

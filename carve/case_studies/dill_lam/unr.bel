@@ -1,0 +1,3 @@
+LF unr : lctx → type =
+| un/n : unr nil
+| un/c : unr Δ → mult_neq α lin → unr (cons Δ _ _ α);

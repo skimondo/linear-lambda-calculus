@@ -1,0 +1,100 @@
+%======================================================%
+% Explicit contexts
+%======================================================%
+
+%------------------------------------------------------%
+% Length-indexed typing contexts
+%------------------------------------------------------%
+
+LF lctx : nat → type =
+| nil : lctx zero
+| cons : lctx N → obj → tp → mult → lctx (suc N);
+
+% Typing context equality
+
+LF cx_eq : lctx N → lctx N → type =
+| cx/refl : cx_eq Δ Δ;
+
+%------------------------------------------------------%
+% Main operations on typing contexts
+%------------------------------------------------------%
+
+% Splitting / merging typing contexts: Δ₁ ⋈ Δ₂ = Δ
+
+LF merge : lctx N → lctx N → lctx N → type =
+| mg/n : merge nil nil nil
+| mg/c : merge Δ₁ Δ₂ Δ → • α₁ α₂ α → merge (cons Δ₁ X A α₁) (cons Δ₂ X A α₂) (cons Δ X A α);
+
+% Δ[x :α A ↦ₙ y :β B] = Δ'
+% i.e., x appears in Δ at position n with type A and multiplicity α, and 
+% Δ' is the result of changing that entry to y :β B
+
+LF upd : lctx N → nat → obj → obj → tp → tp → mult → mult → lctx N → type =
+| upd/t : {Δ:lctx N} upd (cons Δ X A α) (suc N) X X' A A' α α' (cons Δ X' A' α')
+| upd/n : upd Δ n X X' A A' α α' Δ' → upd (cons Δ Y B β) n X X' A A' α α' (cons Δ' Y B β);
+
+% Only unrestricted assumptions appear in Δ,
+% parametric to the predicate "unr α"; in the case of linear type systems,
+% "unr α" holds when α = 𝟘 (unavailable).
+
+LF exh : lctx _ → type =
+| exh/n : exh nil
+| exh/c : exh Δ → unr α → exh (cons Δ _ _ α);
+
+% Δ ≈ Δ', Δ = Δ' up to varying multiplicities
+% (corresponds to 0Δ = 0Δ' for linear systems)
+
+LF same_elts: lctx N → lctx N → type =
+| se/n : same_elts nil nil
+| se/c : same_elts Δ Δ' → same_elts (cons Δ X A _) (cons Δ' X A _);
+
+%------------------------------------------------------%
+% Shorthand for other properties
+%------------------------------------------------------%
+
+% Δ[(n, x) ↔ (m, y)] = Δ', i.e., permute two distinct elements of a typing context
+
+LF exch : lctx N → nat → obj → nat → obj → lctx N → type =
+| exch/u : neq n m → upd Δ n X Y A B α β Δ'' → upd Δ'' m Y X B A β α Δ' → exch Δ n X m Y Δ';
+
+% Look up name, type, and multiplicity
+
+LF lookup : obj → tp → mult → lctx _ → type = 
+| look : upd Δ _ X _ A _ α _ _ → lookup X A α Δ;
+
+% Look up name
+
+LF lookup_n : obj → lctx _ → type = 
+| lookn : upd Δ _ X _ _ _ _ _ _ → lookup_n X Δ;
+
+% Look up index and name
+
+LF lookup_in : nat → obj → lctx _ → type = 
+| lookin : upd Δ n X _ _ _ _ _ _ → lookup_in n X Δ;
+
+% Look up index, name, and type
+
+LF lookup_int : nat → obj → tp → lctx _ → type = 
+| lookint : upd Δ n X _ A _ _ _ _ → lookup_int n X A Δ;
+
+% Look up index, name, type, and multiplicity
+
+LF lookup_intm : nat → obj → tp → mult → lctx _ → type =
+| lookintm : upd Δ n X _ A _ α _ _ → lookup_intm n X A α Δ;
+
+%------------------------------------------------------%
+% Well-formedness conditions
+%------------------------------------------------------%
+
+% Context contains no duplicate names and only elements of the LF context
+
+inductive Wf : (Ψ:ctx) {Δ:[Ψ ⊢ lctx k]} ctype =
+| Wf/n : Wf [_ ⊢ nil]
+| Wf/c : Wf [_ ⊢ Δ] → ([_ ⊢ lookup_n #p Δ] → [ ⊢ false]) → Wf [_ ⊢ cons Δ #p _ _];
+
+% TODO
+% Context contains only variables from the LF context
+
+inductive VarCtx : (Ψ:ctx) {Δ:[Ψ ⊢ lctx k]} ctype =
+| VCtx/n : VarCtx [_ ⊢ nil]
+| VCtx/c : VarCtx [_ ⊢ Δ] → VarCtx [_ ⊢ cons Δ #p _ _];

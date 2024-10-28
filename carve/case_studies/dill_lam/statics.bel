@@ -1,0 +1,21 @@
+%------------------------------------------------------%
+% Statics of linear λ-calculus
+%------------------------------------------------------%
+
+% LF unr : lctx → type =
+% | un/n : unr nil
+% | un/c : unr Δ → mult_neq α 𝟙 → unr (cons Δ _ _ α);
+
+LF unr : lctx → type =
+| un/n : unr nil
+| un/c : unr Δ → mult_neq α lin → unr (cons Δ _ _ α);
+
+LF oft : lctx → obj → tp → type =
+| oft/var : rmv Δ X T lin _ Δ' → unr Δ' → oft Δ X T
+| oft/ivar : rmv Δ X T ω _ Δ' → unr Δ' → oft Δ X T
+| oft/lam : ({x:obj} oft (cons Δ x T lin) (M x) S) → oft Δ (lam M) (lolli T S)
+| oft/ilam : ({x:obj} oft (cons Δ x T ω) (M x) S) → oft Δ (ilam M) (imp T S)   
+| oft/app : oft Δ₁ M (lolli T S) → oft Δ₂ N T → merge Δ₁ Δ₂ Δ → oft Δ (app M N) S
+  % not sure about this
+| oft/iapp : oft Δ₁ M (imp T S) → oft Δ₂ N T → unr Δ₂ → merge Δ₁ Δ₂ Δ → oft Δ (app M N) S		    
+;

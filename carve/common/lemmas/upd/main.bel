@@ -1,0 +1,490 @@
+%======================================================%
+% Properties of context update
+%======================================================%
+
+%------------------------------------------------------%
+% Pruning lemmas
+%------------------------------------------------------%
+
+% "Prune" LF context to remove dependencies:
+% Obtain from [Ψ,x:obj ⊢ upd Δ[..] n[] X X A₁[] A₂[] α₁[] α₂[] Δ'] that neither X nor Δ' depend on x
+
+inductive PruneUpd : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) {U:[Ψ,x:obj ⊢ upd Δ[..] n[] X X' A[] A'[] α[] α'[] Δ']} ctype =
+| Prune-Upd : [Ψ ⊢ upd Δ n[] X X' A[] A'[] α[] α'[] Δ']
+  → {U:[Ψ,x:obj ⊢ upd Δ[..] n[] X[..] X'[..] A[] A'[] α[] α'[] Δ'[..]]} PruneUpd [Ψ,x:obj ⊢ U];
+
+rec prune_upd : {U:[Ψ,x:obj ⊢ upd Δ[..] n[] X X A[] A'[] α[] α'[] Δ']} PruneUpd [Ψ,x:obj ⊢ U] =
+  / total 1 /
+  mlam U ⇒ case [_,x:obj ⊢ U] of
+  | [_,x:obj ⊢ upd/t _] ⇒ Prune-Upd [_ ⊢ upd/t _] [_,x:obj ⊢ _]
+  | [_,x:obj ⊢ upd/n U1] ⇒
+    let Prune-Upd [_ ⊢ U2] [_,x:obj ⊢ _] = prune_upd [_,x:obj ⊢ U1] in
+    Prune-Upd [_ ⊢ upd/n U2] [_,x:obj ⊢ _]
+  ;
+
+%------------------------------------------------------%
+% Basic properties
+%------------------------------------------------------%
+
+% Obtain the identity update judgment on the top-most element of a given context
+
+rec upd_top : (Ψ:ctx) {Δ:[Ψ ⊢ lctx N[]]} {X:[Ψ ⊢ obj]} {X':[Ψ ⊢ obj]} {A:[ ⊢ tp]} {A':[ ⊢ tp]} {α:[ ⊢ mult]} {α':[ ⊢ mult]}
+[Ψ ⊢ upd (cons Δ X A[] α[]) (suc N[]) X X' A[] A'[] α[] α'[] (cons Δ X' A'[] α'[])] =
+  / total /
+  mlam _, _, _, _, _, _, _ ⇒ [_ ⊢ upd/t _]
+  ;
+
+rec refl_top : (Ψ:ctx) {Δ:[Ψ ⊢ lctx N[]]} {X:[Ψ ⊢ obj]} {A:[ ⊢ tp]} {α:[ ⊢ mult]}
+[Ψ ⊢ upd (cons Δ X A[] α[]) (suc N[]) X X A[] A[] α[] α[] (cons Δ X A[] α[])] =
+  / total /
+  mlam _, _, _, _ ⇒ [_ ⊢ upd/t _]
+  ;
+
+% If (x :α A) ∈ₙ Δ, obtain the result of changing the entry to (y :β B)
+
+LF get_upd : lctx _ → nat → obj → obj → tp → tp → mult → mult → type =
+  get-upd : upd Δ n X X' A A' α α' Δ' → get_upd Δ n X X' A A' α α';
+
+rec lookup_getupd : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n X X' A A' α α' Δ'] → {Y:[Ψ ⊢ obj]} {B:[ ⊢ tp]} {β:[ ⊢ mult]} [Ψ ⊢ get_upd Δ n X Y A B[] α β[]] =
+  / total 1 /
+  fn u ⇒ mlam Y, B, β ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒ [_ ⊢ get-upd (upd/t _)]
+  | [_ ⊢ upd/n U1] ⇒
+    let [_ ⊢ get-upd U2] = lookup_getupd [_ ⊢ U1] [_ ⊢ Y] [ ⊢ B] [ ⊢ β] in
+    [_ ⊢ get-upd (upd/n U2)]
+  ;
+
+%------------------------------------------------------%
+% Context size
+%------------------------------------------------------%
+
+% If n ∈ Δ then 0 < n < |Δ| + 1
+
+rec lookup_is_suc : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n[] X X' A A' α α' Δ'] → [ ⊢ is_suc n] =
+  / total 1 /
+  fn u ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒ [ ⊢ is-suc]
+  | [_ ⊢ upd/n U1] ⇒ lookup_is_suc [_ ⊢ U1]
+  ;
+
+rec len_upd_lt : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n[] X X' A A' α α' Δ'] → [ ⊢ lt n (suc N)] =
+  / total 1 /
+  fn u ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒ lt_suc [ ⊢ _]
+  | [_ ⊢ upd/n U1] ⇒ lt_trans (len_upd_lt [_ ⊢ U1]) (lt_suc [ ⊢ _])
+  ;
+
+% Practical corollary: A context of length n cannot have an entry at position n + 1
+
+rec len_upd_contra : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ (suc N[]) X X' A A' α α' Δ'] → [ ⊢ false] =
+  / total /
+  fn u ⇒ impossible lt_irreflex (len_upd_lt u)
+  ;
+
+%------------------------------------------------------%
+% Look-up properties
+%------------------------------------------------------%
+
+% One cannot update a name not bound in the context
+
+rec upd_contra : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ,x:obj ⊢ upd Δ[..] n x X A₁ A₂ α₁ α₂ Δ'] → [ ⊢ false] =
+  / total 1 /
+  fn u ⇒ let [_,x:obj ⊢ upd/n U1] = u in upd_contra [_,x:obj ⊢ U1]
+  ;
+
+% Corollary: If (Δ, x :α A)[x :α' A' ↦ y :β B] = Δ' and x is not bound in Δ, then A' = A, α' = α, and Δ' = (Δ, y :β B)
+
+LF upd_istop : upd _ _ _ _ _ _ _ _ _ → type =
+| upd-istop : {U:upd (cons Δ X A α) n X X' A A' α α' (cons Δ X' A' α')} upd_istop U;
+
+rec upd_var_istop : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]])
+{U:[Ψ,x:obj ⊢ upd (cons Δ[..] x A[] α[]) n[] x Y A'[] B[] α'[] β[] Δ']} [Ψ,x:obj ⊢ upd_istop U] =
+  / total /
+  mlam U ⇒ case [_ ⊢ U] of
+  | [_,x:obj ⊢ upd/t _] ⇒ [_ ⊢ upd-istop _]
+  | [_,x:obj ⊢ upd/n U1] ⇒ impossible upd_contra [_ ⊢ U1]
+  ;
+
+% Uniqueness of look-up (or left-uniqueness of update):
+% (1) If (x :α A), (x' :α' A') ∈ₙ Δ then x = x', α = α', and A = A'
+% (2) If (x :α A) ∈ₙ Δ, (x :α' A') ∈ₘ Δ and Δ is well-formed, then n = m, α = α', and A = A'
+
+LF obj_tp_mult_eq : obj → obj → tp → tp → mult → mult → type =
+| obj-tp-lab-refl : obj_tp_mult_eq X X A A α α;
+
+rec lookup_unq : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n[] X Y A B α β Δ'] → [Ψ ⊢ upd Δ n[] X' Y' A' B' α' β' Δ''] → [Ψ ⊢ obj_tp_mult_eq X X' A A' α α'] =
+  / total 1 /
+  fn u1, u2 ⇒ case u1 of
+  | [_ ⊢ upd/t _] ⇒
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒ [_ ⊢ obj-tp-lab-refl]
+    | [_ ⊢ upd/n U2'] ⇒ impossible len_upd_contra [_ ⊢ U2'])
+  | [_ ⊢ upd/n U1'] ⇒
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒ impossible len_upd_contra [_ ⊢ U1']
+    | [_ ⊢ upd/n U2'] ⇒ lookup_unq [_ ⊢ U1'] [_ ⊢ U2'])
+  ;
+
+LF nat_tp_mult_eq : nat → nat → tp → tp → mult → mult → type =
+| nat-tp-lab-refl : nat_tp_mult_eq n n A A α α;
+
+rec lookup_unq_obj : [Ψ ⊢ upd Δ n[] X Y₁ A₁[] B₁ α₁[] β₁ Δ₁] → [Ψ ⊢ upd Δ n'[] X Y₂ A₂[] B₂ α₂[] β₂ Δ₂] → Wf [Ψ ⊢ Δ] → [ ⊢ nat_tp_mult_eq n n' A₁ A₂ α₁ α₂] =
+  / total 1 /
+  fn u1, u2, wf ⇒ case wf of
+  | Wf/n ⇒ impossible u1
+  | Wf/c wf1 n ⇒
+    (case u1 of
+    | [_ ⊢ upd/t _] ⇒
+      (case u2 of
+      | [_ ⊢ upd/t _] ⇒ [ ⊢ nat-tp-lab-refl]
+      | [_ ⊢ upd/n U2] ⇒ impossible n [_ ⊢ lookn U2])
+    | [_ ⊢ upd/n U1] ⇒
+      (case u2 of
+      | [_ ⊢ upd/t _] ⇒ impossible n
+      | [_ ⊢ upd/n U2] ⇒ lookup_unq_obj [_ ⊢ U1] [_ ⊢ U2] wf1)
+    )
+  ;
+
+% Preservation of look-up under update:
+% If (x :α A) ∈ₙ Δ, (y :β B) ∈ₘ Δ and n ≠ m, then (x :α A) ∈ₙ Δ[y :β B ↦ₘ y' :β' B'] for any y',B',β'
+
+rec lookup_upd : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n[] Y Y' B B' β β' Δ'] → [Ψ ⊢ upd Δ m[] X X' A A' α α' Δ'']
+→ [ ⊢ neq n m] → [Ψ ⊢ lookup_intm m[] X A α Δ'] =
+  fn u1, u2, n ⇒
+  case u1 of
+  | [_ ⊢ upd/t _] ⇒
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒ impossible neq_irreflex n
+    | [_ ⊢ upd/n U2'] ⇒ [_ ⊢ lookintm (upd/n U2')])
+  | [_ ⊢ upd/n U1']:[_ ⊢ upd _ _ _ _ _ _ _ _ (cons Δ' _ _ _)] ⇒
+    case u2 of
+    | [_ ⊢ upd/t _]:[_ ⊢ upd _ _ Y _ B[] _ β[] _ _] ⇒
+      let [_ ⊢ U3] = refl_top [_ ⊢ Δ'] [_ ⊢ Y] [ ⊢ B] [ ⊢ β] in
+      [_ ⊢ lookintm U3]
+    | [_ ⊢ upd/n U2'] ⇒
+      let [_ ⊢ lookintm U3] = lookup_upd [_ ⊢ U1'] [_ ⊢ U2'] n in
+      [_ ⊢ lookintm (upd/n U3)]
+  ;
+
+% If (x :α A) ∈ₙ Δ, (y :β B) ∈ₘ Δ, and Δ is well-formed, then n ≠ m iff x ≠ y
+
+rec lookup_neq_nat2var : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n[] X X' A[] A' α[] α' Δ'] → [Ψ ⊢ upd Δ m[] Y Y' B[] B' β[] β' Δ'']
+→ [ ⊢ neq n m] → Wf [Ψ ⊢ Δ] → ([Ψ ⊢ obj_eq X Y] → [ ⊢ false]) =
+  / total /
+  fn u1, u2, n, wf, e ⇒
+  let [_ ⊢ obj/refl] = e in
+  let [ ⊢ nat-tp-lab-refl] = lookup_unq_obj u1 u2 wf in
+  neq_irreflex n
+  ;
+
+rec lookup_neq_var2nat : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n[] X X' A A' α α' Δ'] → [Ψ ⊢ upd Δ m[] Y Y' B B' β β' Δ'']
+→ ([Ψ ⊢ obj_eq X Y] → [ ⊢ false]) → [ ⊢ neq n m] =
+  / total 1 /
+  fn u1, u2, n ⇒ case u1 of
+  | [_ ⊢ upd/t _] ⇒
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒ impossible n [_ ⊢ obj/refl]
+    | [_ ⊢ upd/n U2] ⇒
+      let [ ⊢ LT] = len_upd_lt [_ ⊢ U2] in
+      [ ⊢ neq/2 LT]
+    )
+  | [_ ⊢ upd/n U1] ⇒
+    case u2 of
+    | [_ ⊢ upd/t _] ⇒
+      let [ ⊢ LT] = len_upd_lt [_ ⊢ U1] in
+      [ ⊢ neq/1 LT]
+    | [_ ⊢ upd/n U2] ⇒ lookup_neq_var2nat [_ ⊢ U1] [_ ⊢ U2] n
+  ;
+
+%------------------------------------------------------%
+% Algebraic properties
+%------------------------------------------------------%
+
+% Functionality (or right-uniqueness):
+% (1) If Δ[x :α A ↦ₙ y :β B] = Δ' and Δ[x :α A ↦ₙ y :β B] = Δ'', then Δ' = Δ''
+% (2) If Δ[x :α A ↦ₙ y :β B] = Δ', Δ[x :α A ↦ₘ y :β B] = Δ'', and Δ is well-formed, then Δ' = Δ''
+%     [corollary of (1) using lookup_unq_obj]
+
+rec upd_func : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n X Y A B α β Δ'] → [Ψ ⊢ upd Δ n X Y A B α β Δ''] → [Ψ ⊢ cx_eq Δ' Δ''] =
+  / total 1 /
+  fn u1, u2 ⇒ case u1 of
+  | [_ ⊢ upd/t _] ⇒
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒ [_ ⊢ cx/refl]
+    | [_ ⊢ upd/n U2'] ⇒ impossible len_upd_contra [_ ⊢ U2']
+    )
+  | [_ ⊢ upd/n U1'] ⇒
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒ impossible len_upd_contra [_ ⊢ U1']
+    | [_ ⊢ upd/n U2'] ⇒
+      let [_ ⊢ cx/refl] = upd_func [_ ⊢ U1'] [_ ⊢ U2'] in
+      [_ ⊢ cx/refl]
+    )
+  ;
+
+rec upd_func_obj : [Ψ ⊢ upd Δ n[] X Y A[] B α[] β Δ'] → [Ψ ⊢ upd Δ n'[] X Y A[] B α[] β Δ''] → Wf [Ψ ⊢ Δ] → [Ψ ⊢ cx_eq Δ' Δ''] =
+  / total 1 /
+  fn u1, u2, wf ⇒
+  let [ ⊢ nat-tp-lab-refl] = lookup_unq_obj u1 u2 wf in
+  upd_func u1 u2
+  ;
+
+% Reflexivity: Δ[x :α A ↦ x :α A] = Δ
+
+rec upd_refl : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n X X' A A' α α' Δ'] → [Ψ ⊢ upd Δ n X X A A α α Δ] =
+  / total 1 /
+  fn u ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒ [_ ⊢ upd/t _]
+  | [_ ⊢ upd/n U] ⇒ let [_ ⊢ U1] = upd_refl [_ ⊢ U] in [_ ⊢ upd/n U1]
+  ;
+
+% Symmetry: If Δ[x :α A ↦ₙ y :β B] = Δ', then Δ[y :β B ↦ₙ x :α A] = Δ'
+
+rec upd_symm : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ n X X' A A' α α' Δ'] → [Ψ ⊢ upd Δ' n X' X A' A α' α Δ] =
+  / total 1 /
+  fn u ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒ [_ ⊢ upd/t _]
+  | [_ ⊢ upd/n U1] ⇒ let [_ ⊢ U2] = upd_symm [_ ⊢ U1] in [_ ⊢ upd/n U2]
+  ;
+
+% Transitivity:
+% (1) Δ[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂][x₂ :α₂ A₂ ↦ₙ x₃ :α₃ A₃] = Δ[x₁ :α₁ A₁ ↦ₙ x₃ :α₃ A₃]
+% (2) Δ[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂][x₂ :α₂ A₂ ↦ₘ x₃ :α₃ A₃] = Δ[x₁ :α₁ A₁ ↦ₙ x₃ :α₃ A₃] if the "intermediate context" is well-formed
+%     [corollary of (1) using lookup_unq_obj]
+
+rec upd_trans : (Ψ:ctx) (Δ₁:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ₁ n X₁ X₂ A₁ A₂ α₁ α₂ Δ₂] → [Ψ ⊢ upd Δ₂ n X₂' X₃ A₂' A₃ α₂' α₃ Δ₃] → [Ψ ⊢ upd Δ₁ n X₁ X₃ A₁ A₃ α₁ α₃ Δ₃] =
+  / total 1 /
+  fn u1, u2 ⇒ case u1 of
+  | [_ ⊢ upd/t _] ⇒
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒ [_ ⊢ upd/t _]
+    | [_ ⊢ upd/n U2'] ⇒ impossible len_upd_contra [_ ⊢ U2'])
+  | [_ ⊢ upd/n U1'] ⇒
+    case u2 of
+    | [_ ⊢ upd/t _] ⇒ impossible len_upd_contra (upd_symm [_ ⊢ U1'])
+    | [_ ⊢ upd/n U2'] ⇒ let [_ ⊢ U3] = upd_trans [_ ⊢ U1'] [_ ⊢ U2'] in [_ ⊢ upd/n U3]
+  ;
+
+rec upd_trans_obj : [Ψ ⊢ upd Δ₁ n[] X₁ X₂ A₁[] A₂[] α₁[] α₂[] Δ₂] → [Ψ ⊢ upd Δ₂ m[] X₂ X₃ A₂'[] A₃[] α₂'[] α₃[] Δ₃]
+→ Wf [Ψ ⊢ Δ₂] → [Ψ ⊢ upd Δ₁ n[] X₁ X₃ A₁[] A₃[] α₁[] α₃[] Δ₃] =
+  / total 1 /
+  fn u1, u2, wf ⇒
+  let [ ⊢ nat-tp-lab-refl] = lookup_unq_obj (upd_symm u1) u2 wf in
+  upd_trans u1 u2
+  ;
+
+% Confluence:
+% (1) Δ[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂][y₁ :β₁ B₁ ↦ₘ y₂ :β₂ B₂] = Δ[y₁ :β₁ B₁ ↦ₘ y₂ :β₂ B₂][x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂]
+% (2) Δ[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂][y₁ :β₁ B₁ ↦ₘ y₂ :β₂ B₂] = Δ[y₁ :β₁ B₁ ↦ₘ' y₂ :β₂ B₂][x₁ :α₁ A₁ ↦ₙ' x₂ :α₂ A₂]
+%     if Δ and the "intermediate contexts" are well-formed
+
+rec upd_conf : (Ψ:ctx) (Δ₁:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ₁ n[] X₁ X₂ A₁[] A₂[] α₁[] α₂[] Δ₂] → [Ψ ⊢ upd Δ₂ m[] Y₁ Y₂ B₁[] B₂[] β₁[] β₂[] Δ₃]
+→ [Ψ ⊢ upd Δ₁ m[] Y₁ Y₂ B₁[] B₂[] β₁[] β₂[] Δ₂'] → [Ψ ⊢ upd Δ₂' n[] X₁ X₂ A₁[] A₂[] α₁[] α₂[] Δ₃']
+→ [Ψ ⊢ cx_eq Δ₃ Δ₃'] =
+  / total 1 /
+  fn U1, U2, U3, U4 ⇒ case U1 of
+  | [_ ⊢ upd/t _] ⇒
+    (case U2 of
+    | [_ ⊢ upd/t _] ⇒
+      (case U3 of
+      | [_ ⊢ upd/t _] ⇒
+        (case U4 of
+        | [_ ⊢ upd/t _] ⇒ [_ ⊢ cx/refl]
+        | [_ ⊢ upd/n U4'] ⇒ impossible len_upd_contra [_ ⊢ U4']
+        )
+      | [_ ⊢ upd/n U3'] ⇒ impossible len_upd_contra [_ ⊢ U3']
+      )
+    | [_ ⊢ upd/n U2'] ⇒
+      (case U3 of
+      | [_ ⊢ upd/t _] ⇒ impossible len_upd_contra [_ ⊢ U2']
+      | [_ ⊢ upd/n U3'] ⇒
+        (case U4 of
+        | [_ ⊢ upd/t _] ⇒
+          let [_ ⊢ cx/refl] = upd_func [_ ⊢ U2'] [_ ⊢ U3'] in
+          [_ ⊢ cx/refl]
+        | [_ ⊢ upd/n U4'] ⇒ impossible len_upd_contra [_ ⊢ U4']
+        )
+      )
+    )
+  | [_ ⊢ upd/n U1'] ⇒
+    (case U2 of
+    | [_ ⊢ upd/t _] ⇒
+      (case U3 of
+      | [_ ⊢ upd/t _] ⇒
+        (case U4 of
+        | [_ ⊢ upd/t _] ⇒ impossible len_upd_contra [_ ⊢ U1']
+        | [_ ⊢ upd/n U4'] ⇒
+          let [_ ⊢ cx/refl] = upd_func [_ ⊢ U1'] [_ ⊢ U4'] in
+          [_ ⊢ cx/refl]
+        )
+      | [_ ⊢ upd/n U3'] ⇒ impossible len_upd_contra [_ ⊢ U3']
+      )
+    | [_ ⊢ upd/n U2'] ⇒
+      (case U3 of
+      | [_ ⊢ upd/t _] ⇒ impossible len_upd_contra [_ ⊢ U2']
+      | [_ ⊢ upd/n U3'] ⇒
+        (case U4 of
+        | [_ ⊢ upd/t _] ⇒ impossible len_upd_contra [_ ⊢ U1']
+        | [_ ⊢ upd/n U4'] ⇒
+          let [_ ⊢ cx/refl] = upd_conf [_ ⊢ U1'] [_ ⊢ U2'] [_ ⊢ U3'] [_ ⊢ U4'] in
+          [_ ⊢ cx/refl]
+        )
+      )
+    )
+  ;
+
+rec upd_conf_obj : [Ψ ⊢ upd Δ₁ _ X₁ X₂ A₁[] A₂[] α₁[] α₂[] Δ₂] → [Ψ ⊢ upd Δ₂ _ Y₁ Y₂ B₁[] B₂[] β₁[] β₂[] Δ₃]
+→ [Ψ ⊢ upd Δ₁ _ Y₁ Y₂ B₁[] B₂[] β₁[] β₂[] Δ₂'] → [Ψ ⊢ upd Δ₂' _ X₁ X₂ A₁[] A₂[] α₁[] α₂[] Δ₃']
+→ Wf [Ψ ⊢ Δ₁] → Wf [Ψ ⊢ Δ₂] → Wf [Ψ ⊢ Δ₂'] → [Ψ ⊢ cx_eq Δ₃ Δ₃'] =
+  / total 1 /
+  fn u1, u2, u3, u4, wf1, wf2, wf3 ⇒ case u1 of
+  | [_ ⊢ upd/t _] ⇒
+    let (Wf/c wf1' n1, Wf/c wf2' n2) = (wf1, wf2) in
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒
+      (case u3 of
+      | [_ ⊢ upd/t _] ⇒
+        (case u4 of
+        | [_ ⊢ upd/t _] ⇒ [_ ⊢ cx/refl]
+        | [_ ⊢ upd/n U4] ⇒ impossible n1 [_ ⊢ lookn U4]
+        )
+      | [_ ⊢ upd/n U3] ⇒ impossible n2 [_ ⊢ lookn U3]
+      )
+    | [_ ⊢ upd/n U2] ⇒
+      (case u3 of
+      | [_ ⊢ upd/t _] ⇒ impossible n1 [_ ⊢ lookn U2]
+      | [_ ⊢ upd/n U3] ⇒
+        let [_ ⊢ cx/refl] = upd_func_obj [_ ⊢ U2] [_ ⊢ U3] wf1' in
+        (case u4 of
+        | [_ ⊢ upd/t _] ⇒ [_ ⊢ cx/refl]
+        | [_ ⊢ upd/n U4] ⇒
+          let Wf/c wf3' n3 = wf3 in
+          impossible n3 [_ ⊢ lookn U4]
+        )
+      )
+    )
+  | [_ ⊢ upd/n U1] ⇒
+    let (Wf/c wf1' n1, Wf/c wf2' n2) = (wf1, wf2) in
+    (case u2 of
+    | [_ ⊢ upd/t _] ⇒
+      (case u3 of
+      | [_ ⊢ upd/t _] ⇒
+        (case u4 of
+        | [_ ⊢ upd/t _] ⇒
+          let Wf/c wf3' n3 = wf3 in
+          impossible n3 [_ ⊢ lookn U1]
+        | [_ ⊢ upd/n U4] ⇒
+          let [_ ⊢ cx/refl] = upd_func_obj [_ ⊢ U1] [_ ⊢ U4] wf1' in
+          [_ ⊢ cx/refl]
+        )
+      | [_ ⊢ upd/n U3] ⇒ impossible n1 [_ ⊢ lookn U3]
+      )
+    | [_ ⊢ upd/n U2] ⇒
+      (case u3 of
+      | [_ ⊢ upd/t _] ⇒ impossible n2 [_ ⊢ lookn U2]
+      | [_ ⊢ upd/n U3] ⇒
+        let Wf/c wf3' n3 = wf3 in
+        (case u4 of
+        | [_ ⊢ upd/t _] ⇒ impossible n1 [_ ⊢ lookn U1]
+        | [_ ⊢ upd/n U4] ⇒
+          let [_ ⊢ cx/refl] = upd_conf_obj [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ U3] [_ ⊢ U4] wf1' wf2' wf3' in
+          [_ ⊢ cx/refl]
+        )
+      )
+    )
+  ;
+
+% Practical corollaries:
+% (1) If Δ[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂][y₁ :β₁ B₁ ↦ₘ y₂ :β₂ B₂] = Δ' and n ≠ m, then
+%     Δ[y₁ :β₁ B₁ ↦ₘ y₂ :β₂ B₂] = Δ'' and Δ''[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂] = Δ' for some Δ''
+% (2) If Δ[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂] = Δ', Δ[y₁ :β₁ B₁ ↦ₘ y₂ :β₂ B₂] = Δ'', and n ≠ m, then
+%     Δ'[y₁ :β₁ B₁ ↦ₘ y₂ :β₂ B₂] = Δ''' and Δ''[x₁ :α₁ A₁ ↦ₙ x₂ :α₂ A₂] = Δ''' for some Δ'''
+%     [corollary of (1) using upd_symm]
+
+LF upd-changeorder : upd _ _ _ _ _ _ _ _ Δ → upd Δ _ _ _ _ _ _ _ _ → type =
+  | upd-ch : upd Δ₁ m Y Y' B B' β β' Δ₂' → upd Δ₂' n X X' A A' α α' Δ₃
+    → {U1:upd Δ₁ n X X' A A' α α' Δ₂} {U2:upd Δ₂ m Y Y' B B' β β' Δ₃} upd-changeorder U1 U2;
+
+rec upd_changeorder : (Ψ:ctx) (Δ₁:[Ψ ⊢ lctx N[]]) {U1:[Ψ ⊢ upd Δ₁ n[] X X' A[] A'[] α[] α'[] Δ₂]} {U2:[Ψ ⊢ upd Δ₂ m[] Y Y' B[] B'[] β[] β'[] Δ₃]}
+[ ⊢ neq n m] → [Ψ ⊢ upd-changeorder U1 U2] =
+  / total /
+  mlam U1, U2 ⇒ fn n ⇒
+  let [_ ⊢ _]:[_ ⊢ upd _ _ _ X' _ A'[] _ α'[] _] = [_ ⊢ U1] in
+  let [_ ⊢ _]:[_ ⊢ upd _ _ _ Y' _ B'[] _ β'[] _] = [_ ⊢ U2] in
+  let [_ ⊢ lookintm U3'] = lookup_upd (upd_symm [_ ⊢ U1]) [_ ⊢ U2] n in
+  let [_ ⊢ get-upd U3] = lookup_getupd [_ ⊢ U3'] [_ ⊢ Y'] [ ⊢ B'] [ ⊢ β'] in
+  let [_ ⊢ lookintm U4'] = lookup_upd [_ ⊢ U3] [_ ⊢ U1] (neq_comm n) in
+  let [_ ⊢ get-upd U4] = lookup_getupd [_ ⊢ U4'] [_ ⊢ X'] [ ⊢ A'] [ ⊢ α'] in
+  let [_ ⊢ cx/refl] = upd_conf [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ U3] [_ ⊢ U4] in
+  [_ ⊢ upd-ch U3 U4 _ _]
+  ;
+
+LF upd-pushout : upd Δ _ _ _ _ _ _ _ _ → upd Δ _ _ _ _ _ _ _ _ → type =
+  | upd-po : upd Δ₂ m Y Y' B B' β β' Δ₃ → upd Δ₂' n X X' A A' α α' Δ₃
+    → {U1:upd Δ₁ n X X' A A' α α' Δ₂} {U2:upd Δ₁ m Y Y' B B' β β' Δ₂'} upd-pushout U1 U2;
+
+rec upd_pushout : (Ψ:ctx) (Δ₁:[Ψ ⊢ lctx N[]]) {U1:[Ψ ⊢ upd Δ₁ n[] X X' A[] A'[] α[] α'[] Δ₂]} {U2:[Ψ ⊢ upd Δ₁ m[] Y Y' B[] B'[] β[] β'[] Δ₂']}
+[ ⊢ neq n m] → [Ψ ⊢ upd-pushout U1 U2] =
+  / total /
+  mlam U1, U2 ⇒ fn n ⇒
+  let [_ ⊢ U1_sym] = upd_symm [_ ⊢ U1] in
+  let [_ ⊢ upd-ch U3 U4_sym _ _] = upd_changeorder [_ ⊢ U1_sym] [_ ⊢ U2] n in
+  let [_ ⊢ U4] = upd_symm [_ ⊢ U4_sym] in
+  [_ ⊢ upd-po U3 U4 _ _]
+  ;
+
+%------------------------------------------------------%
+% Corollaries of look-up properties
+%------------------------------------------------------%
+
+% Corollaries:
+% (1) If (x :α A) ∈ₙ Δ, then x ∈ₙ Δ[y :β B ↦ₙ y :β' B']
+% (1) If (x :α A) ∈ₙ Δ, then (x :α' A) ∈ₙ Δ[y :β B ↦ₙ y' :β' B] for some α'
+
+rec lookup_changenmlab : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ m Y Y B B' β β' Δ'] → [Ψ ⊢ upd Δ n X X' A A' α α' Δ''] → [Ψ ⊢ lookup_in n X Δ'] =
+  / total /
+  fn u1, u2 ⇒
+  let [_ ⊢ U1_symm]:[_ ⊢ upd _ n[] _ _ _ _ _ _ _] = upd_symm u1 in
+  let [_ ⊢ _]:[_ ⊢ upd _ m[] _ _ _ _ _ _ _] = u2 in
+  case comp_nats [ ⊢ n] [ ⊢ m] of
+  | [ ⊢ comp_names/eq] ⇒
+    let [_ ⊢ obj-tp-lab-refl] = lookup_unq u1 u2 in
+    [_ ⊢ lookin U1_symm]
+  | [ ⊢ comp_names/neq NEQ] ⇒
+    let [_ ⊢ lookintm U3] = lookup_upd u1 u2 [ ⊢ NEQ] in
+    [_ ⊢ lookin U3]
+  ;
+
+rec lookup_changelab : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ upd Δ m Y Y B B β β' Δ'] → [Ψ ⊢ upd Δ n X X' A A' α α' Δ''] → [Ψ ⊢ lookup_int n X A Δ'] =
+  / total /
+  fn u1, u2 ⇒
+  let [_ ⊢ U1_symm]:[_ ⊢ upd _ n[] _ _ _ _ _ _ _] = upd_symm u1 in
+  let [_ ⊢ _]:[_ ⊢ upd _ m[] _ _ _ _ _ _ _] = u2 in
+  case comp_nats [ ⊢ n] [ ⊢ m] of
+  | [ ⊢ comp_names/eq] ⇒
+    let [_ ⊢ obj-tp-lab-refl] = lookup_unq u1 u2 in
+    [_ ⊢ lookint U1_symm]
+  | [ ⊢ comp_names/neq NEQ] ⇒
+    let [_ ⊢ lookintm U3] = lookup_upd u1 u2 [ ⊢ NEQ] in
+    [_ ⊢ lookint U3]
+  ;
+
+% Compare two update judgments: either they are updating the same location or not
+
+LF comp-look : upd _ _ _ _ _ _ _ _ _ → upd _ _ _ _ _ _ _ _ _ → type =
+  | look-eq : {U1:upd _ n X _ A _ α _ _} {U2:upd _ n X _ A _ α _ _} comp-look U1 U2
+  | look-neq : neq n m → {U1:upd _ n _ _ _ _ _ _ _} {U2:upd _ m _ _ _ _ _ _ _} comp-look U1 U2
+  ;
+
+rec comp_look : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]])
+{U1:[Ψ ⊢ upd Δ n[] X X' A[] A'[] α[] α'[] Δ']} {U2:[Ψ ⊢ upd Δ m[] Y Y' B[] B'[] β[] β'[] Δ'']} [Ψ ⊢ comp-look U1 U2] =
+  / total /
+  mlam U1, U2 ⇒
+  let [_ ⊢ _]:[_ ⊢ upd _ n[] _ _ _ _ _ _ _] = [_ ⊢ U1] in
+  let [_ ⊢ _]:[_ ⊢ upd _ m[] _ _ _ _ _ _ _] = [_ ⊢ U2] in
+  case comp_nats [ ⊢ n] [ ⊢ m] of
+  | [ ⊢ comp_names/eq] ⇒
+    let [_ ⊢ obj-tp-lab-refl] = lookup_unq [_ ⊢ U1] [_ ⊢ U2] in
+    [_ ⊢ look-eq _ _]
+  | [ ⊢ comp_names/neq NEQ] ⇒ [_ ⊢ look-neq NEQ[] _ _]
+  ;

@@ -1,0 +1,100 @@
+%======================================================%
+% Properties of natural number inequalities
+%======================================================%
+
+% n < n + 1 for any n
+
+rec lt_suc : {n:[ ⊢ nat]} [ ⊢ lt n (suc n)] =
+  / total 1 /
+  mlam n ⇒ case [ ⊢ n] of
+  | [ ⊢ zero] ⇒ [ ⊢ lt/z]
+  | [ ⊢ suc n] ⇒ let [ ⊢ LT] = lt_suc [ ⊢ n] in [ ⊢ lt/s LT]
+  ;
+
+% Natural numbers are discrete, i.e., it is never the case that m < n < (m + 1)
+
+rec nats_discrete : [ ⊢ lt m n] → [ ⊢ lt n (suc m)] → [ ⊢ false] =
+  / total 1 /
+  fn l1, l2 ⇒ case l1 of
+  | [ ⊢ lt/z] ⇒
+    let [ ⊢ lt/s LT2] = l2 in
+    impossible [ ⊢ LT2]
+  | [ ⊢ lt/s LT1] ⇒
+    let [ ⊢ lt/s LT2] = l2 in
+    nats_discrete [ ⊢ LT1] [ ⊢ LT2]
+  ;
+
+% < is irreflexive
+
+rec lt_irreflex : [ ⊢ lt n n] → [ ⊢ false] =
+  / total 1 /
+  fn l ⇒ let [ ⊢ lt/s LT1] = l in lt_irreflex [ ⊢ LT1]
+  ;
+
+% <, ≤ are transitive
+
+rec lt_trans : [ ⊢ lt n₁ n₂] → [ ⊢ lt n₂ n₃] → [ ⊢ lt n₁ n₃] =
+  / total 2 /
+  fn l1, l2 ⇒ case l1 of
+  | [ ⊢ lt/z] ⇒
+    let [ ⊢ lt/s LT3] = l2 in
+    [ ⊢ lt/z]
+  | [ ⊢ lt/s LT3] ⇒
+    let [ ⊢ lt/s LT4] = l2 in
+    let [ ⊢ LT5] = lt_trans [ ⊢ LT3] [ ⊢ LT4] in
+    [ ⊢ lt/s LT5]
+  ;
+
+rec leq_trans : [ ⊢ leq n₁ n₂] → [ ⊢ leq n₂ n₃] → [ ⊢ leq n₁ n₃] =
+  / total /
+  fn LEQ1, LEQ2 ⇒ case (LEQ1, LEQ2) of
+  | ([ ⊢ leq/id],[ ⊢ leq/id]) ⇒ [ ⊢ leq/id]
+  | ([ ⊢ leq/id],[ ⊢ leq/lt LT2]) ⇒ LEQ2
+  | ([ ⊢ leq/lt LT1],[ ⊢ leq/id]) ⇒ LEQ1
+  | ([ ⊢ leq/lt LT1],[ ⊢ leq/lt LT2]) ⇒
+    let [ ⊢ LT] = lt_trans [ ⊢ LT1] [ ⊢ LT2] in
+    [ ⊢ leq/lt LT]
+  ;
+
+% ≠ is commutative
+
+rec neq_comm : [ ⊢ neq n m] → [ ⊢ neq m n] =
+  / total /
+  fn n ⇒ case n of
+  | [ ⊢ neq/1 LT] ⇒ [ ⊢ neq/2 LT]
+  | [ ⊢ neq/2 LT] ⇒ [ ⊢ neq/1 LT]
+  ;
+
+% ≠ is irreflexive
+
+rec neq_irreflex : [ ⊢ neq n n] → [ ⊢ false] =
+  / total /
+  fn n ⇒ case n of
+  | [ ⊢ neq/1 LT] ⇒ lt_irreflex [ ⊢ LT]
+  | [ ⊢ neq/2 LT] ⇒ lt_irreflex [ ⊢ LT]
+  ;
+
+% n = m or n ≠ m for any n, m
+
+LF compare_nats : nat → nat → type =
+| comp_names/eq : compare_nats n n
+| comp_names/neq : neq n m → compare_nats n m;
+
+rec comp_nats : {n:[ ⊢ nat]} {m:[ ⊢ nat]} [ ⊢ compare_nats n m] =
+  mlam n, m ⇒ case [ ⊢ n] of
+  | [ ⊢ zero] ⇒
+    (case [ ⊢ m] of
+    | [ ⊢ zero] ⇒ [ ⊢ comp_names/eq]
+    | [ ⊢ suc m] ⇒ [ ⊢ comp_names/neq (neq/1 lt/z)]
+    )
+  | [ ⊢ suc n] ⇒
+    (case [ ⊢ m] of
+    | [ ⊢ zero] ⇒ [ ⊢ comp_names/neq (neq/2 lt/z)]
+    | [ ⊢ suc m] ⇒
+      (case comp_nats [ ⊢ n] [ ⊢ m] of
+      | [ ⊢ comp_names/eq] ⇒ [ ⊢ comp_names/eq]
+      | [ ⊢ comp_names/neq (neq/1 LT)] ⇒ [ ⊢ comp_names/neq (neq/1 (lt/s LT))]
+      | [ ⊢ comp_names/neq (neq/2 LT)] ⇒ [ ⊢ comp_names/neq (neq/2 (lt/s LT))]
+      )
+    )
+  ;

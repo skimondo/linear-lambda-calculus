@@ -1,0 +1,54 @@
+%------------------------------------------------------%
+% Removal
+%------------------------------------------------------%
+
+%------------------------------------------------------%
+% LkupExh
+%------------------------------------------------------%
+
+% If LkupExh [Ψ,x:tm ⊢ cons Δ[..] x T[] 𝟙] [Ψ,x:tm ⊢ X] [ ⊢ T'] [ ⊢ 𝟙]
+% then exh(Δ), X = x, and T' = T
+
+rec lkup_weak : LkupExh [Ψ ⊢ Δ] [Ψ ⊢ X] [ ⊢ A]
+→ LkupExh [Ψ,x:tm ⊢ cons Δ[..] x B[] 𝟘] [Ψ,x:tm ⊢ X[..]] [ ⊢ A] =
+  / total /
+  fn l ⇒
+  let Lkp/exh rm ex = l in
+  Lkp/exh (Rmv/c rm) (Exh/c ex)
+  ;
+
+inductive LkupStrT : (Ψ:tctx) [Ψ ⊢ lctx] → [Ψ,x:tm ⊢ tm] → [ ⊢ tp] → ctype = 
+  | Lkp/str : LkupExh [Ψ ⊢ Δ] [Ψ ⊢ X] [ ⊢ A]
+    → LkupStrT [Ψ ⊢ Δ] [Ψ,x:tm ⊢ X[..]] [ ⊢ A];
+
+rec lkup_str_top : LkupExh [Ψ,x:tm ⊢ cons Δ[..] x B[] 𝟘] [Ψ,x:tm ⊢ X] [ ⊢ A]
+→ LkupStrT [Ψ ⊢ Δ] [Ψ,x:tm ⊢ X] [ ⊢ A] =
+  / total /
+  fn l ⇒
+  let Lkp/exh (Rmv/c rm) (Exh/c ex) = l in
+  Lkp/str (Lkp/exh rm ex)
+  ;
+
+%{ - - - - - - - - - - - - - - - - - -
+% More generally:
+
+inductive LkupStr : (Ψ:tctx) (Ψ':tctx) {$S:$[Ψ ⊢ Ψ']} [Ψ' ⊢ lctx] → [Ψ ⊢ tm] → [ ⊢ tp] → ctype = 
+  | Lkp'/str : LkupExh [Ψ' ⊢ Δ] [Ψ' ⊢ X] [ ⊢ A]
+    → LkupStr $[Ψ ⊢ $S] [Ψ' ⊢ Δ] [Ψ ⊢ X[$S]] [ ⊢ A];
+
+rec lkup_str : LkupExh [Ψ ⊢ Δ] [Ψ ⊢ #p] [ ⊢ A]
+→ Rmv [Ψ] [Φ] [Ψ ⊢ Δ] [Ψ ⊢ #q] [ ⊢ 𝟘] [ ⊢ B] $[Ψ ⊢ $S] [Φ ⊢ Δ']
+→ LkupStr $[Ψ ⊢ $S] [Φ ⊢ Δ'] [Ψ ⊢ #p] [ ⊢ A] = ? ;
+%- - - - - - - - - - - - - - - - - - }%
+
+inductive LkupToplin : (Ψ:tctx) [Ψ ⊢ lctx] → [Ψ ⊢ tm] → [ ⊢ tp] → ctype = 
+  | Lkp/toplin : Exh [Ψ ⊢ Δ]
+    → LkupToplin [Ψ,x:tm ⊢ cons Δ[..] x T[] 𝟙] [Ψ,x:tm ⊢ x] [ ⊢ T];
+
+rec lkup_toplin : LkupExh [Ψ,x:tm ⊢ cons Δ[..] x T[] 𝟙] [Ψ,x:tm ⊢ X] [ ⊢ T']
+→ LkupToplin [Ψ,x:tm ⊢ cons Δ[..] x T[] 𝟙] [Ψ,x:tm ⊢ X] [ ⊢ T'] =
+  / total /
+  fn l ⇒ case l of
+  | Lkp/exh Rmv/t ex ⇒ Lkp/toplin ex
+  | Lkp/exh (Rmv/c rm) ex ⇒ impossible ex
+  ;

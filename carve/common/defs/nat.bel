@@ -1,0 +1,41 @@
+%======================================================%
+% Natural numbers
+%======================================================%
+
+LF nat : type =
+| zero : nat
+| suc : nat → nat;
+
+% n = n
+
+LF nat_eq : nat → nat → type =
+| nat/refl : nat_eq n n;
+
+% n < m
+
+LF lt : nat → nat → type =
+| lt/z : lt zero (suc _)
+| lt/s : lt n m → lt (suc n) (suc m);
+
+% n ≤ m
+
+LF leq : nat → nat → type =
+| leq/id : leq n n
+| leq/lt : lt n m → leq n m;
+
+% n ≠ m
+
+LF neq : nat → nat → type =
+| neq/1 : lt n m → neq n m
+| neq/2 : lt m n → neq n m;
+
+% n + m = k
+
+LF plus : nat → nat → nat → type =
+| pl/z : plus zero n n
+| pl/s : plus n m k → plus (suc n) m (suc k);
+
+% n = n' + 1 for some n'
+
+LF is_suc : nat → type =
+| is-suc : is_suc (suc n);

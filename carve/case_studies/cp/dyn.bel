@@ -1,0 +1,30 @@
+%======================================================%
+% Dynamics of CP / SCP
+%======================================================%
+
+LF ⇛ : obj → obj → type =
+
+% Principal reductions
+| βfwd : ⇛ (pcomp _ (\x.fwd x Y) P) (P Y)
+| β1⊥ : ⇛ (pcomp ① (\x.close x) (\x.wait x P)) P
+| β⊗⅋ : ⇛ (pcomp (A ⊗ B) (\x.(out x P Q)) (\x.inp x R)) (pcomp A P (\y.pcomp B Q (\x.R x y)))
+| β⊕&1 : ⇛ (pcomp (A ⊕ B) (\x.inl x P) (\x.choice x Q R)) (pcomp A P Q)
+| β⊕&2 : ⇛ (pcomp (A ⊕ B) (\x.inr x P) (\x.choice x Q R)) (pcomp B P R)
+
+% Commuting conversions
+| κ⊥ : ⇛ (pcomp A (\z.wait X (P z)) R) (wait X (pcomp A P R))
+| κ⊗1 : ⇛ (pcomp A (\z.out X (\y.P y z) Q) R) (out X (\y.pcomp A (\z.P y z) R) Q)
+| κ⊗2 : ⇛ (pcomp A (\z.out X P (\x.Q x z)) R) (out X P (\x.pcomp A (\z.Q x z) R))
+| κ⅋ : ⇛ (pcomp A (\z.inp X (\x.\y.P x y z)) Q) (inp X (\x.\y.pcomp A (\z.P x y z) Q))
+| κ⊕1 : ⇛ (pcomp A (\z.inl X (\x.P x z)) Q) (inl X (\x.pcomp A (\z.P x z) Q))
+| κ⊕2 : ⇛ (pcomp A (\z.inr X (\x.P x z)) Q) (inr X (\x.pcomp A (\z.P x z) Q))
+| κ& : ⇛ (pcomp A (\z.choice X (\x.P x z) (\x.Q x z)) R) (choice X (\x.pcomp A (\z.P x z) R) (\x.pcomp A (\z.Q x z) R))
+
+% Reduction under cut
+| β∥1 : ({x:obj} (⇛ (P x) (P' x))) → ⇛ (pcomp A P Q) (pcomp A P' Q)
+| β∥2 : ({x:obj} (⇛ (Q x) (Q' x))) → ⇛ (pcomp A P Q) (pcomp A P Q')
+
+% Reductions commute with equivalences
+| β≡ : (P ≡ Q) → (⇛ Q R) → (R ≡ S) → ⇛ P S;
+
+--infix ⇛ 10 left.

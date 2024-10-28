@@ -1,0 +1,11 @@
+% Terms as variables
+
+LF var : type =
+  | lam : (var → var) → var
+  | app : var → var → var
+  | coerce : var → tp → var
+  ;
+
+LF var_eq : var → var → type = var/refl : var_eq M M;
+
+schema ctx = var;

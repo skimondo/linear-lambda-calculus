@@ -1,0 +1,17 @@
+%======================================================%
+% Algebraic properties that depend on
+% resource algebra operation being cancellative
+%======================================================%
+
+% Cancellativity: If Δ₁ ⋈ Δ₂ = Δ₁ ⋈ Δ₂', then Δ₂ = Δ₂'
+
+rec merge_cancl : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [Ψ ⊢ merge Δ₁ Δ₂' Δ] → [Ψ ⊢ cx_eq Δ₂ Δ₂'] =
+  / total 1 /
+  fn m1, m2 ⇒ case m1 of
+  | [_ ⊢ mg/n] ⇒ let [_ ⊢ mg/n] = m2 in [_ ⊢ cx/refl]
+  | [_ ⊢ mg/c M1 T1[]] ⇒
+    let [_ ⊢ mg/c M2 T2[]] = m2 in
+    let [_ ⊢ cx/refl] = merge_cancl [_ ⊢ M1] [_ ⊢ M2] in
+    let [ ⊢ mult/refl] = mult_canc [ ⊢ T1] [ ⊢ T2] in
+    [_ ⊢ cx/refl]
+  ;

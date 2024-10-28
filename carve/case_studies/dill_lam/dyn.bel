@@ -1,0 +1,13 @@
+%------------------------------------------------------%
+% Dynamics of dill λ-calculus
+%------------------------------------------------------%
+
+LF step : obj → obj → type =
+| s/app1 : step M M' → step (app M N) (app M' N)
+| s/app2 : step N N' → step (app M N) (app M N')
+| s/lam : ({x:obj} step (M x) (M' x)) → step (lam M) (lam M')
+| s/red : step (app (lam M) N) (M N)
+| s/iapp1 : step M M' → step (iapp M N) (iapp M' N)
+| s/iapp2 : step N N' → step (iapp M N) (iapp M N')
+| s/ilam : ({x:obj} step (M x) (M' x)) → step (ilam M) (ilam M')
+| s/ired : step (iapp (ilam M) N) (M N);

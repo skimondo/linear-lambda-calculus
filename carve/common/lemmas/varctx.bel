@@ -1,0 +1,42 @@
+%======================================================%
+% Properties of VarCtx predicate
+%======================================================%
+
+% If VarCtx [Ψ ⊢ Δ] and x ∈ Δ, then x is a parameter variable from Ψ
+
+rec varctx_isvar : VarCtx [Ψ ⊢ Δ] → [Ψ ⊢ upd Δ n[] X X' A A' α α' Δ'] → IsVar [Ψ ⊢ X] =
+  / total 2 /
+  fn vc, u ⇒ case u of
+  | [_ ⊢ upd/t _] ⇒ let VCtx/c _ = vc in Is-Var
+  | [_ ⊢ upd/n U1] ⇒ let VCtx/c vcc1 = vc in  varctx_isvar vcc1 [_ ⊢ U1]
+  ;
+
+% Extend VarCtx judgment with new variable of type obj
+
+rec varctx_ext : VarCtx [Ψ ⊢ Δ] → VarCtx [Ψ,x:obj ⊢ Δ[..]] =
+  / total 1 /
+  fn vc ⇒ case vc of
+  | VCtx/n ⇒ VCtx/n
+  | VCtx/c vc ⇒ VCtx/c (varctx_ext vc)
+  ; 
+
+% Extending a context with a fresh variable preserves VarCtx predicate
+
+rec varctx_extcons : VarCtx [Ψ ⊢ Δ] → VarCtx [Ψ,x:obj ⊢ cons Δ[..] x _ _] =
+  / total /
+  fn vc ⇒ VCtx/c (varctx_ext vc)
+  ; 
+
+% If VarCtx [Ψ ⊢ Δ] and Δ₁ ⋈ Δ₂ = Δ, then VarCtx [Ψ ⊢ Δ₁] and VarCtx [Ψ ⊢ Δ₂]
+
+rec varctx_merge : VarCtx [Ψ ⊢ Δ] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → VarCtx [Ψ ⊢ Δ₁] =
+  / total d (varctx_merge d) /
+  fn wf, m ⇒ case wf of
+  | VCtx/n ⇒ let [_ ⊢ mg/n] = m in VCtx/n
+  | VCtx/c vc ⇒ let [_ ⊢ mg/c M1 _] = m in VCtx/c (varctx_merge vc [_ ⊢ M1])
+  ;
+
+rec varctx_merge_r : VarCtx [Ψ ⊢ Δ] → [Ψ ⊢ merge Δ₁ Δ₂ Δ] → VarCtx [Ψ ⊢ Δ₂] =
+  / total /
+  fn vc, m ⇒ varctx_merge vc (merge_comm m)
+  ;

@@ -1,0 +1,157 @@
+%======================================================%
+% Properties of exchange predicate
+%======================================================%
+
+%------------------------------------------------------%
+% General properties
+%------------------------------------------------------%
+
+% Permute the topmost elements of a context:
+% (Δ, x:α A, y :β B)[(|Δ| + 1, x) ↔ (|Δ| + 2, y)] = (Δ, y :β B, x:α A)
+
+rec exch_top : (Ψ:ctx) {Δ:[Ψ ⊢ lctx N[]]} {X:[Ψ ⊢ obj]} {A:[ ⊢ tp]} {α:[ ⊢ mult]} {Y:[Ψ ⊢ obj]} {B:[ ⊢ tp]} {β:[ ⊢ mult]}
+[Ψ ⊢ exch (cons (cons Δ X A[] α[]) Y B[] β[]) (suc N[]) X (suc (suc N[])) Y (cons (cons Δ Y B[] β[]) X A[] α[])] =
+  / total /
+  mlam Δ, _, _, _, _, _, _ ⇒
+  let [_ ⊢ _]:[_ ⊢ lctx k[]] = [_ ⊢ Δ] in
+  let [ ⊢ LT] = lt_suc [ ⊢ k] in
+  [_ ⊢ exch/u (neq/1 (lt/s LT[])) (upd/n (upd/t _)) (upd/t _)]
+  ;
+
+% Symmetry properties:
+% (1) If Δ[(n, x) ↔ (m, y)][(m, x) ↔ (n, y)] = Δ
+% (1) If Δ[(n, x) ↔ (m, y)] = Δ', then Δ[(m, y) ↔ (n, x)] = Δ'
+
+rec exch_symm : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ exch Δ n X m Y Δ'] → [Ψ ⊢ exch Δ' m X n Y Δ] =
+  / total 1 /
+  fn ex1 ⇒
+  let [_ ⊢ exch/u NEQ1[] U1 U2] = ex1 in
+  let ([_ ⊢ U3],[_ ⊢ U4]) = (upd_symm [_ ⊢ U2],upd_symm [_ ⊢ U1]) in
+  let [ ⊢ NEQ2] = neq_comm [ ⊢ NEQ1] in
+  [_ ⊢ exch/u NEQ2[] U3 U4]
+  ;
+
+rec exch_symm_2 : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ exch Δ n X m Y Δ'] → [Ψ ⊢ exch Δ m Y n X Δ'] =
+  / total 1 /
+  fn ex1 ⇒
+  let [_ ⊢ exch/u NEQ1[] U1 U2] = ex1 in
+  let [_ ⊢ upd-ch U3 U4 _ _] = upd_changeorder [_ ⊢ U1] [_ ⊢ U2] [ ⊢ NEQ1] in
+  let [ ⊢ NEQ2] = neq_comm [ ⊢ NEQ1] in
+  [_ ⊢ exch/u NEQ2[] U3 U4]
+  ;
+
+% Δ[x :α₁ A₁ ↦ₙ x :α₂ A₂][(m, y) ↔ (k, z)] = Δ[(m, y) ↔ (k, z)][x :α₁ A₁ ↦ₙ x :α₂ A₂]
+
+LF if_eq : nat → nat → nat → nat → nat → type =
+  % if_eq k' n m k₁ k₂ ≡ "k' = k₁ if n = m, otherwise k' = k₂"
+  | if-eq/t : if_eq k₁ n n k₁ k₂
+  | if-eq/f : neq n m → if_eq k₂ n m k₁ k₂;
+
+LF get_exch_upd : upd _ _ _ _ _ _ _ _ _ → upd _ _ _ _ _ _ _ _ _ → upd _ _ _ _ _ _ _ _ _ → type =
+| exch-e : upd Δ₁' n X Y A' B' α' β' Δ₂' → upd Δ₂' m Y X B' A' β' α' Δ₃' → upd Δ₃ k' Z Z C C' γ γ' Δ₃'
+  → if_eq k' n k m k'' → if_eq k'' m k n k
+  → {U1:upd Δ₁ n X Y A B α β Δ₂} {U2:upd Δ₂ m Y X B A β α Δ₃} {U:upd Δ₁ k Z Z C C' γ γ' Δ₁'}
+  get_exch_upd U1 U2 U;
+
+rec exch_upd : (Ψ:ctx) (Δ₁:[Ψ ⊢ lctx N[]]) [ ⊢ neq n m] →
+{E1:[Ψ ⊢ upd Δ₁ n[] X Y A[] B[] α[] β[] Δ₂]} {E2:[Ψ ⊢ upd Δ₂ m[] Y X B[] A[] β[] α[] Δ₃]} {U:[Ψ ⊢ upd Δ₁ k[] Z Z C[] C'[] γ[] γ'[] Δ₁']}
+[Ψ ⊢ get_exch_upd E1 E2 U] =
+  fn nq ⇒ mlam E1, E2, U ⇒
+  let [_ ⊢ _]:[_ ⊢ upd _ n[] X Y A[] B[] α[] β[] _] = [_ ⊢ E1] in
+  let [_ ⊢ _]:[_ ⊢ upd _ m[] _ _ _ _ _ _ _] = [_ ⊢ E2] in
+  let [_ ⊢ _]:[_ ⊢ upd _ k[] Z _ _ C'[] _ γ'[] _] = [_ ⊢ U] in
+  case comp_nats [ ⊢ n] [ ⊢ k] of
+  | [ ⊢ comp_names/eq] ⇒
+    let [_ ⊢ obj-tp-lab-refl] = lookup_unq [_ ⊢ U] [_ ⊢ E1] in
+    (case comp_nats [ ⊢ m] [ ⊢ k] of
+    | [ ⊢ comp_names/eq] ⇒ impossible neq_irreflex nq
+    | [ ⊢ comp_names/neq NEQ2] ⇒
+      let [_ ⊢ get-upd U'] = lookup_getupd (upd_symm [_ ⊢ E2]) [_ ⊢ Z] [ ⊢ C'] [ ⊢ γ'] in
+      let [_ ⊢ E3] = upd_trans (upd_symm [_ ⊢ U]) [_ ⊢ E1] in
+      let [_ ⊢ E4] = upd_trans [_ ⊢ E2] [_ ⊢ U'] in
+      [_ ⊢ exch-e E3 E4 U' if-eq/t (if-eq/f NEQ2[]) _ _ _]
+    )
+  | [ ⊢ comp_names/neq NEQ1] ⇒
+    let [_ ⊢ upd-po U' E1' _ _] = upd_pushout [_ ⊢ E1] [_ ⊢ U] [ ⊢ NEQ1] in
+    (case comp_nats [ ⊢ m] [ ⊢ k] of
+    | [ ⊢ comp_names/eq] ⇒
+      let [_ ⊢ obj-tp-lab-refl] = lookup_unq [_ ⊢ U'] [_ ⊢ E2] in
+      let [_ ⊢ upd-ch E3 E4 _ _] = upd_changeorder [_ ⊢ E1] [_ ⊢ E2] nq in
+      let [_ ⊢ get-upd U'''] = lookup_getupd (upd_symm [_ ⊢ E4]) [_ ⊢ Z] [ ⊢ C'] [ ⊢ γ'] in
+      let [_ ⊢ upd-ch U'' E2' _ _] = upd_changeorder [_ ⊢ E2] [_ ⊢ U'''] (neq_comm nq) in
+      let [_ ⊢ upd-po U2' U2 _ _] = upd_pushout [_ ⊢ U''] [_ ⊢ U'] nq in
+      let [_ ⊢ E5] = upd_trans [_ ⊢ E1'] [_ ⊢ U2] in
+      let [_ ⊢ E6] = upd_trans (upd_symm [_ ⊢ U2']) [_ ⊢ E2'] in
+      [_ ⊢ exch-e E5 E6 U''' (if-eq/f NEQ1[]) if-eq/t _ _ _]
+    | [ ⊢ comp_names/neq NEQ2] ⇒
+      let [_ ⊢ upd-po U'' E2' _ _] = upd_pushout [_ ⊢ E2] [_ ⊢ U'] [ ⊢ NEQ2] in
+      [_ ⊢ exch-e E1' E2' U'' (if-eq/f NEQ1[]) (if-eq/f NEQ2[]) _ _ _]
+    )
+  ;
+
+%------------------------------------------------------%
+% Interaction with merge
+%------------------------------------------------------%
+
+% Δ₁[(n, x) ↔ (m, y)] ⋈ Δ₂[(n, x) ↔ (m, y)] = (Δ₁ ⋈ Δ₂)[(n, x) ↔ (m, y)]
+
+LF exch_mg : upd _ _ _ _ _ _ _ _ _ → upd _ _ _ _ _ _ _ _ _ → merge _ _ _ → type =
+| exch-mg : upd Δ₁ n X Y A B α₁ β₁ Δ₁'' → upd Δ₁'' m Y X B A β₁ α₁ Δ₁'
+  → upd Δ₂ n X Y A B α₂ β₂ Δ₂'' → upd Δ₂'' m Y X B A β₂ α₂ Δ₂'
+  → merge Δ₁'' Δ₂'' Δ'' → merge Δ₁' Δ₂' Δ' → • α₁ α₂ α → • β₁ β₂ β
+  → {U1:upd Δ n X Y A B α β Δ''} {U2:upd Δ'' m Y X B A β α Δ'} {M:merge Δ₁ Δ₂ Δ} exch_mg U1 U2 M;
+
+rec exch_merge : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]])
+{U1:[Ψ ⊢ upd Δ n[] X Y A[] B[] α[] β[] Δ'']} {U2:[Ψ ⊢ upd Δ'' m[] Y X B[] A[] β[] α[] Δ']}
+{M:[Ψ ⊢ merge Δ₁ Δ₂ Δ]} [Ψ ⊢ exch_mg U1 U2 M] =
+  mlam U1, U2, M ⇒
+  let [_ ⊢ _]:[_ ⊢ upd _ n[] _ _ _ _ _ β[] _] = [_ ⊢ U1] in
+  let [_ ⊢ _]:[_ ⊢ upd _ m[] _ _ _ _ _ _ _] = [_ ⊢ U2] in
+  case comp_nats [ ⊢ n] [ ⊢ m] of
+  | [ ⊢ comp_names/eq] ⇒
+    let [_ ⊢ cx/refl] = upd_func (upd_symm [_ ⊢ U1]) [_ ⊢ U2] in
+    let [ ⊢ get-u∙ _ MLT0] = mult_get_id [ ⊢ β] in
+    let [_ ⊢ merge-upd U1a U1b MLT1[] M2 _ _ _] = merge_upd_cor [_ ⊢ U1] [_ ⊢ M] [ ⊢ MLT0] in
+    let ([_ ⊢ U2a],[_ ⊢ U2b]) = (upd_symm [_ ⊢ U1a],upd_symm [_ ⊢ U1b]) in
+    [_ ⊢ exch-mg U1a U2a U1b U2b M2 M MLT1[] MLT0[] _ _ _]
+  | [ ⊢ comp_names/neq NEQ] ⇒
+    let [_ ⊢ upd-ch U3 _ _ _] = upd_changeorder [_ ⊢ U1] [_ ⊢ U2] [ ⊢ NEQ] in
+    let [_ ⊢ merge-look U3a' U3b' MLTb[] _ _] = merge_lookup [_ ⊢ U3] [_ ⊢ M] in
+    let [_ ⊢ merge-upd U1a U1b MLTa[] M2 _ _ _] = merge_upd_cor [_ ⊢ U1] [_ ⊢ M] [ ⊢ MLTb] in
+    let [_ ⊢ merge-upd U2a U2b MLTb'[] M3 _ _ _] = merge_upd_cor [_ ⊢ U2] [_ ⊢ M2] [ ⊢ MLTa] in
+    let [_ ⊢ upd-ch U3a _ _ _] = upd_changeorder [_ ⊢ U1a] [_ ⊢ U2a] [ ⊢ NEQ] in
+    let [_ ⊢ upd-ch U3b _ _ _] = upd_changeorder [_ ⊢ U1b] [_ ⊢ U2b] [ ⊢ NEQ] in
+    let [_ ⊢ obj-tp-lab-refl] = lookup_unq [_ ⊢ U3a] [_ ⊢ U3a'] in
+    let [_ ⊢ obj-tp-lab-refl] = lookup_unq [_ ⊢ U3b] [_ ⊢ U3b'] in
+    [_ ⊢ exch-mg U1a U2a U1b U2b M2 M3 MLTa[] MLTb[] _ _ _]
+  ;
+
+%------------------------------------------------------%
+% Interaction with exhaustedness
+%------------------------------------------------------%
+
+% Permuting elements of a context preserves unrestrictedness
+
+rec exch_exh : (Ψ:ctx) (Δ:[Ψ ⊢ lctx N[]]) [Ψ ⊢ exh Δ] → [Ψ ⊢ exch Δ n X m Y Δ'] → [Ψ ⊢ exh Δ'] =
+  / total /
+  fn exh1, ex1 ⇒
+  let [_ ⊢ exch/u NEQ[] U1 U2] = ex1 in
+  let [_ ⊢ lookintm U3] = lookup_upd (upd_symm [_ ⊢ U1]) [_ ⊢ U2] [ ⊢ NEQ] in
+  exh_changetp (exh_changetp exh1 (exh_lookup exh1 [_ ⊢ U3]) [_ ⊢ U1]) (exh_lookup exh1 [_ ⊢ U1]) [_ ⊢ U2]
+  ;
+
+%------------------------------------------------------%
+% Lookup properties
+%------------------------------------------------------%
+
+% If (X :α A) ∈ Δ, then (X :α A) ∈ Δ[(m, y) ↔ (k, z)]
+
+rec exch_lookup : (Ψ:ctx) (Δ₁:[Ψ ⊢ lctx N[]]) [Ψ ⊢ exch Δ₁ m Y k Z Δ₂]
+→ [Ψ ⊢ upd Δ₁ n[] X X' A[] A' α[] α' Δ₁'] → [Ψ ⊢ lookup X A[] α[] Δ₂] =
+  / total /
+  fn e, u ⇒
+  let [_ ⊢ exch/u NEQ[] U1 U2] = e in
+  let [_ ⊢ U'] = upd_refl u in
+  let [_ ⊢ exch-e _ _ LK _ _ _ _ _] = exch_upd [ ⊢ NEQ] [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ U'] in
+  [_ ⊢ look LK]
+  ;

@@ -1,0 +1,123 @@
+%======================================================%
+% Lemmas
+%======================================================%
+
+%------------------------------------------------------%
+% Structural properties of typing judgment
+%------------------------------------------------------%
+
+% Exchange lemma:
+% If Δ ⊢ M : A and Δ[(n, x) ↔ (m, y)] = Δ', then Δ' ⊢ M : A
+
+rec oft_exch : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) [Ψ ⊢ oft Δ M A] → [Ψ ⊢ exch Δ n X m Y Δ']
+→ [Ψ ⊢ oft Δ' M A] =
+  / total 1 /
+  fn oft1, ex1 ⇒
+  let [_ ⊢ exch/u NEQ[] U1 U2] = ex1 in
+  case oft1 of
+  | [_ ⊢ oft/var U3 E1] ⇒
+    let [_ ⊢ exch-e EX1' EX2' U4 IF1 IF2 _ _ _] = exch_upd [ ⊢ NEQ] [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ U3] in
+    let [_ ⊢ E2] = exch_exh [_ ⊢ E1] [_ ⊢ exch/u NEQ[] EX1' EX2'] in
+    [_ ⊢ oft/var U4 E2]
+  | [_ ⊢ oft/lam \x.O1] ⇒
+    let [_,x:obj ⊢ O2] = oft_exch [_,x:obj ⊢ O1] [_,x:obj ⊢ exch/u NEQ[] (upd/n U1[..]) (upd/n U2[..])] in
+    [_ ⊢ oft/lam \x.O2]
+  | [_ ⊢ oft/app O1 O2 M1] ⇒
+    let [_ ⊢ exch-mg U1a U2a U1b U2b _ M2 _ _ _ _ _] = exch_merge [_ ⊢ U1] [_ ⊢ U2] [_ ⊢ M1] in
+    let [_ ⊢ O1'] = oft_exch [_ ⊢ O1] [_ ⊢ exch/u NEQ[] U1a U2a] in
+    let [_ ⊢ O2'] = oft_exch [_ ⊢ O2] [_ ⊢ exch/u NEQ[] U1b U2b] in
+    [_ ⊢ oft/app O1' O2' M2]
+  ;
+
+rec oft_exch_top : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) [Ψ ⊢ oft (cons (cons Δ Y B[] β[]) Z C[] γ[]) M A]
+→ [Ψ ⊢ oft (cons (cons Δ Z C[] γ[]) Y B[] β[]) M A] =
+  / total /
+  fn oft1 ⇒ oft_exch oft1 (exch_top [_ ⊢ _] [_ ⊢ _] [ ⊢ _] [ ⊢ _] [_ ⊢ _] [ ⊢ _] [ ⊢ _])
+  ;
+
+% Strengthening lemma:
+% If Δ, x :⁰ B ⊢ M : A, then (1) M does not depend on x and (2) Δ ⊢ M : A 
+
+inductive StrTop: (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) {O:[Ψ ⊢ oft Δ M A[]]} ctype =
+  | Str-Top : [Ψ ⊢ oft Δ M A[]] → {O:[Ψ,x:obj ⊢ oft (cons Δ[..] x B[] 𝟘) M[..] A[]]} StrTop [Ψ,x:obj ⊢ O]
+  ;
+
+rec oft_str : {O:[Ψ,x:obj ⊢ oft (cons Δ[..] x B[] 𝟘) M A[]]} StrTop [Ψ,x:obj ⊢ O] =
+  / total d (oft_str d) /
+  mlam O ⇒ case [_,x:obj ⊢ O] of
+  | [_,x:obj ⊢ oft/var (upd/n U1) (exh/c E1 _)] ⇒
+    let Prune-Upd [_ ⊢ U2] [_,x:obj ⊢ _] = prune_upd [_,x:obj ⊢ U1] in
+    let [_ ⊢ E2] = prune_exh [_ ⊢ E1] in
+    Str-Top [_ ⊢ oft/var U2 E2] [_,x:obj ⊢ _]
+  | [_,x:obj ⊢ oft/lam \y.O1] ⇒
+    let [_,x:obj,y:obj ⊢ O1'[..,y,x]] = oft_exch_top [_,x:obj,y:obj ⊢ O1] in
+    let Str-Top [_,x:obj ⊢ O2] [_,x:obj,y:obj ⊢ _] = oft_str [_,x:obj,y:obj ⊢ O1'] in
+    Str-Top [_ ⊢ oft/lam \x.O2] [_,x:obj ⊢ _]
+  | [_,x:obj ⊢ oft/app O1 O2 (mg/c M1 •/us)] ⇒
+    let Prune-Merge [_ ⊢ M2] [_,x:obj ⊢ _] = prune_merge [_,x:obj ⊢ M1] in
+    let Str-Top [_ ⊢ O1'] [_,x:obj ⊢ _] = oft_str [_,x:obj ⊢ O1] in
+    let Str-Top [_ ⊢ O2'] [_,x:obj ⊢ _] = oft_str [_,x:obj ⊢ O2] in
+    Str-Top [_ ⊢ oft/app O1' O2' M2] [_,x:obj ⊢ _]
+  ;
+
+% Weakening lemma:
+% If Δ ⊢ M : A, then Δ, x :⁰ B ⊢ M : A for any B
+
+rec oft_weak : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) [Ψ ⊢ oft Δ M A[]]
+→ {B:[ ⊢ tp]} [Ψ,x:obj ⊢ oft (cons Δ[..] x B[] 𝟘) M[..] A[]] =
+  / total 1 /
+  fn oft1 ⇒ mlam B ⇒ case oft1 of
+  | [_ ⊢ oft/var U1 E1] ⇒ [_ ⊢ oft/var (upd/n U1[..]) (exh/c E1[..] unr/0)]
+  | [_ ⊢ oft/lam \x.O1] ⇒
+    let [_,x:obj,y:obj ⊢ O1'[..,y,x]] = oft_exch_top (oft_weak [_,x:obj ⊢ O1] [ ⊢ B]) in
+    [_,x:obj ⊢ oft/lam \y.O1']
+  | [_ ⊢ oft/app O1 O2 M1] ⇒
+    let [_,x:obj ⊢ O1'] = oft_weak [_ ⊢ O1] [ ⊢ B] in
+    let [_,x:obj ⊢ O2'] = oft_weak [_ ⊢ O2] [ ⊢ B] in
+    [_,x:obj ⊢ oft/app O1' O2' (mg/c M1[..] •/us)]
+  ;
+
+%------------------------------------------------------%
+% Main lemmas
+%------------------------------------------------------%
+
+% Substitution lemma:
+% If (1) Δ₁, x :¹ B ⊢ M : A, (2) Δ₂ ⊢ N : B, and (3) Δ₁ ⋈ Δ₂ = Δ, then Δ ⊢ [N/x]M : A
+
+rec sub_lem : (Ψ:ctx) (Δ:[Ψ ⊢ lctx k[]]) [Ψ,x:obj ⊢ oft (cons Δ₁[..] x B[] 𝟙) M A[]]
+→ [Ψ ⊢ oft Δ₂ N B[]] → [Ψ ⊢ merge Δ₁ Δ₂ Δ]
+→ [Ψ ⊢ oft Δ M[..,N] A[]] =
+  / total d (sub_lem d) /
+  fn d1, d2, mg ⇒
+  let [_ ⊢ M1] = mg in
+  case d1 of
+  | [_,x:obj ⊢ oft/var U1 E1] ⇒
+    (case [_,x:obj ⊢ U1] of
+    | [_,x:obj ⊢ upd/t _] ⇒
+      let [_,x:obj ⊢ exh/c E2 _] = [_,x:obj ⊢ E1] in
+      let [_ ⊢ cx/refl] = merge_id mg (prune_exh [_ ⊢ E2]) in
+      d2
+    | [_,x:obj ⊢ upd/n _] ⇒
+      let [_,x:obj ⊢ exh/c _ T[]] = [_,x:obj ⊢ E1] in
+      impossible [ ⊢ T]
+    )
+  | [_,x:obj ⊢ oft/lam \y.O1] ⇒
+    let [_,y:obj,x:obj ⊢ O1'[..,x,y]] = oft_exch_top [_,x:obj,y:obj ⊢ O1] in
+    let [_,x:obj ⊢ O2] = sub_lem [_,x:obj,y:obj ⊢ O1'] (oft_weak d2 [ ⊢ _]) [_,x:obj ⊢ mg/c M1[..] •/a1] in
+    [_ ⊢ oft/lam \x.O2]
+  | [_,x:obj ⊢ oft/app O1 O2 (mg/c M2' MLT[])] ⇒
+    let Prune-Merge [_ ⊢ M2] [_,x:obj ⊢ _] = prune_merge [_,x:obj ⊢ M2'] in
+    case [ ⊢ MLT] of
+    | [ ⊢ •/a1] ⇒
+      let [_ ⊢ M2_comm] = merge_comm [_ ⊢ M2] in
+      let [_ ⊢ mg-assoc M3 M4_comm _ _] = merge_assoc [_ ⊢ M1] [_ ⊢ M2_comm] in
+      let [_ ⊢ M4] = merge_comm [_ ⊢ M4_comm] in
+      let Str-Top [_ ⊢ O2'] [_,x:obj ⊢ _] = oft_str [_,x:obj ⊢ O2] in
+      let [_ ⊢ O1'] = sub_lem [_,x:obj ⊢ O1] d2 [_ ⊢ M3] in
+      [_ ⊢ oft/app O1' O2' M4]
+    | [ ⊢ •/a2] ⇒
+      let [_ ⊢ mg-assoc M3 M4 _ _] = merge_assoc [_ ⊢ M1] [_ ⊢ M2] in
+      let Str-Top [_ ⊢ O1'] [_,x:obj ⊢ _] = oft_str [_,x:obj ⊢ O1] in
+      let [_ ⊢ O2'] = sub_lem [_,x:obj ⊢ O2] d2 [_ ⊢ M3] in
+      [_ ⊢ oft/app O1' O2' M4]
+  ;

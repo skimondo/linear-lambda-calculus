@@ -1,0 +1,72 @@
+%======================================================%
+% Translation between CP and SCP
+%======================================================%
+
+%------------------------------------------------------%
+% Translation from CP to SCP
+%------------------------------------------------------%
+
+% Enc relates Φ and Δ, and builds a weakening substitution that maps names in Ψ to names in Φ
+% Wf [Ψ ⊢ Δ] is implicit, since Φ contains only unique assumptions
+
+inductive Enc : (Ψ:ctx) (Φ:hctx) {Δ:[Ψ ⊢ lctx N[]]} {$σ:$[Φ ⊢ Ψ]} ctype =
+| Enc/n : Enc [ ⊢ nil] $[ ⊢ ^]
+| Enc/c : Enc [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+  → {A:[ ⊢ tp]} {α:[ ⊢ mult]} Enc [Ψ,x:obj ⊢ cons Δ[..] x A[] α[]] $[Φ,b:block x:obj,h:hyp x A[] ⊢ $σ[..],b.1];
+
+%------------------------------------------------------%
+% Translation from SCP to CP
+%------------------------------------------------------%
+
+% Relate Φ with a typing context Δ in which all names are assigned the multiplicity 𝟘
+
+inductive RelUsed : (Φ:hctx) (Ψ:ctx) {Δ:[Ψ ⊢ lctx N[]]} {$σ:$[Φ ⊢ Ψ]} ctype =
+| relUsed/n : RelUsed [ ⊢ nil] $[ ⊢ ^]
+| relUsed/c : RelUsed [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+  → RelUsed [Ψ,x:obj ⊢ cons Δ[..] x A[] 𝟘] $[Φ,b:block x:obj,h:hyp x A[] ⊢ $σ[..],b.1];
+
+% Relate Φ with a typing context Δ containing the same typing information, but will all names except X set as `used`
+
+inductive RelName : (Ψ:ctx) (Φ:hctx) {X:[Ψ ⊢ obj]} {Δ:[Ψ ⊢ lctx N[]]} {$σ:$[Φ ⊢ Ψ]} ctype = 
+| relName/t : RelUsed [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+  → RelName [Ψ,x:obj ⊢ x] [Ψ,x:obj ⊢ cons Δ[..] x A[] 𝟙] $[Φ,b:block x:obj,h:hyp x A[] ⊢ $σ[..],b.1]
+| relName/n : RelName [Ψ ⊢ X] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+  → RelName [Ψ,x:obj ⊢ X[..]] [Ψ,x:obj ⊢ cons Δ[..] x B[] 𝟘] $[Φ,b:block x:obj,h:hyp x B[] ⊢ $σ[..],b.1];
+
+% Dec relates Φ and Δ, where the choice of multiplicities in Δ depends on some process P;
+% ensures that the process is linear w.r.t. all linear channels in the context; and
+% builds a weakening substitution that maps names in Ψ to variables in Φ.
+% Wf [Ψ ⊢ Δ] is implicit since Φ contains only unique assumptions
+
+inductive Dec : (Ψ:ctx) (Φ:hctx) {P:[Ψ ⊢ obj]} {Δ:[Ψ ⊢ lctx N[]]} {$σ:$[Φ ⊢ Ψ]} ctype = 
+| Dec/fwd : [Ψ ⊢ upd Δ m[] Y Y A'[] A'[] 𝟙 𝟘 Δ'] % x,y are the only linear channels in Δ
+  → RelName [Ψ ⊢ X] [Ψ ⊢ Δ'] $[Φ ⊢ $σ] % x is the only linear channel in Δ'
+  → Dec [Ψ ⊢ fwd X Y] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/close : RelName [Ψ ⊢ X] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+  → Dec [Ψ ⊢ close X] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/wait : [Ψ ⊢ upd Δ n[] X X ⊥ ⊥ 𝟙 𝟘 Δ']
+  → Dec [Ψ ⊢ P] [Ψ ⊢ Δ'] $[Φ ⊢ $σ]
+  → Dec [Ψ ⊢ wait X P] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/out : [Ψ ⊢ upd Δ₂ n[] X X (A[] ⊗ B[]) (A[] ⊗ B[]) 𝟙 𝟘 Δ₂']
+  → [Ψ ⊢ merge Δ₁ Δ₂ Δ]
+  → Dec [Ψ,x:obj ⊢ P] [Ψ,x:obj ⊢ cons Δ₁[..] x A[] 𝟙] $[Φ,b:block x:obj,h:hyp x A[] ⊢ $σ[..],b.1]
+  → Dec [Ψ,x:obj ⊢ Q] [Ψ,x:obj ⊢ cons Δ₂'[..] x B[] 𝟙] $[Φ,b:block x:obj,h:hyp x B[] ⊢ $σ[..],b.1]
+  → Dec [Ψ ⊢ out X (\x.P) (\x.Q)] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/inp : [Ψ ⊢ upd Δ n[] X X (A[] ⅋ B[]) (A[] ⅋ B[]) 𝟙 𝟘 Δ']
+  → Dec [Ψ,y:obj,x:obj ⊢ P[..,y,x]] [Ψ,y:obj,x:obj ⊢ cons (cons Δ'[..] y B[] 𝟙) x A[] 𝟙]
+    $[Φ,b1:block (y:obj,h:hyp y B[]),b2:block (x:obj,h:hyp x A[]) ⊢ $σ[..],b1.1,b2.1]
+  → Dec [Ψ ⊢ inp X \y.\x.P] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/pcomp : [Ψ ⊢ merge Δ₁ Δ₂ Δ] → [ ⊢ dual A A']
+  → Dec [Ψ,x:obj ⊢ P] [Ψ,x:obj ⊢ cons Δ₁[..] x A[] 𝟙] $[Φ,b:block x:obj,h:hyp x A[] ⊢ $σ[..],b.1]
+  → Dec [Ψ,x:obj ⊢ Q] [Ψ,x:obj ⊢ cons Δ₂[..] x A'[] 𝟙] $[Φ,b:block x:obj,h:hyp x A'[] ⊢ $σ[..],b.1]
+  → Dec [Ψ ⊢ pcomp A[] (\x.P) (\x.Q)] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/inl : [Ψ ⊢ upd Δ n[] X X (A[] ⊕ B[]) (A[] ⊕ B[]) 𝟙 𝟘 Δ']
+  → Dec [Ψ,x:obj ⊢ P] [Ψ,x:obj ⊢ cons Δ'[..] x A[] 𝟙] $[Φ,b:block x:obj,h:hyp x A[] ⊢ $σ[..],b.1]
+  → Dec [Ψ ⊢ inl X \x.P] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/inr : [Ψ ⊢ upd Δ n[] X X (A[] ⊕ B[]) (A[] ⊕ B[]) 𝟙 𝟘 Δ']
+  → Dec [Ψ,x:obj ⊢ P] [Ψ,x:obj ⊢ cons Δ'[..] x B[] 𝟙] $[Φ,b:block x:obj,h:hyp x B[] ⊢ $σ[..],b.1]
+  → Dec [Ψ ⊢ inr X \x.P] [Ψ ⊢ Δ] $[Φ ⊢ $σ]
+| Dec/choice : [Ψ ⊢ upd Δ n[] X X (A[] & B[]) (A[] & B[]) 𝟙 𝟘 Δ']
+  → Dec [Ψ,x:obj ⊢ P] [Ψ,x:obj ⊢ cons Δ'[..] x A[] 𝟙] $[Φ,b:block x:obj,h:hyp x A[] ⊢ $σ[..],b.1]
+  → Dec [Ψ,x:obj ⊢ Q] [Ψ,x:obj ⊢ cons Δ'[..] x B[] 𝟙] $[Φ,b:block x:obj,h:hyp x B[] ⊢ $σ[..],b.1]
+  → Dec [Ψ ⊢ choice X (\x.P) (\x.Q)] [Ψ ⊢ Δ] $[Φ ⊢ $σ];
