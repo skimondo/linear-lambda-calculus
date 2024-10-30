@@ -1,0 +1,10 @@
+# Ignore compiled Coq files
+*.vo
+*.vos
+*.vok
+*.glob
+*.aux
+
+# Ignore backup and temp files
+*~
+\#*\#
