@@ -10,6 +10,10 @@
 \#*\#
 
 # Ignore Makefile
+
 Makefile.conf
 Makefile
 .Makefile.d
+
+#VSCODE
+.vscode/
