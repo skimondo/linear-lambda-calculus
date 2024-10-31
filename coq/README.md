@@ -2,9 +2,10 @@
 
 ## How to run project
 
-*Execute inside coq directory,* for more info check [here](https://coq.inria.fr/doc/V8.18.0/refman/practical-tools/utilities.html)
+*Execute inside coq directory*
 
-start by creating a Makefile using coq's congifuration `_CoqProject` file
+start by creating a Makefile using coq's congifuration `_CoqProject` file.
+In order to use `coq_makefile` command, you need at least `coq` and `make` installed. check[ dependencies](#dependencies)
 
 ```bash
 coq_makefile -f _CoqProject -o Makefile
@@ -19,5 +20,12 @@ make
 Some frequently used `make` commands:
 
 - `make clean`
+- `make cleanall` use this when modifying `_CoqProject` file
 - `make all.pdf`
 
+# Dependencies
+
+```sh
+sudo apt-get install make
+sudo apt-get install coq
+```
