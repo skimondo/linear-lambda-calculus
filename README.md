@@ -1,7 +1,7 @@
 # Lambda Linear Logic: Beluga and Coq Implementations
 
 The purpose of this repository it to implement the lambda linear logic using coq proof assistant.
-An implementattion is already available using Beluga proof assistant inside [carve directory](carve/README.md), it was written by Anonymous Author(s).
+An implementation is already available using Beluga proof assistant inside [carve directory](carve/README.md), it was written by Anonymous Author(s).
 
 ## Project Goals
 
@@ -26,3 +26,8 @@ linear-lambda-calculus
 └── docs/                     
     ├── comparison.md         
     └── setup_instructions.md 
+```
+
+## Disclaimer
+
+Please note that errors may be present in this repository. I am by no means an expert in either Coq or Beluga and have limited experience with linear logic and proof assistants in general.
