@@ -36,11 +36,12 @@ Inductive cx_eq {N : nat_alt} : lctx N -> lctx N -> Type :=
 (* Define N of type nat_alt *)
 (* https://coq.inria.fr/distrib/current/refman/language/gallina-extensions.html#implicit-generalization *)
 
-
-(* Inductive merge (N : nat_alt) : lctx N -> lctx N -> lctx N -> Type := *)
-(* | mg_n : merge zero_nat nil nil nil. *)
-(* | mg_c : forall (delta1 delta2 delta : lctx N) (alpha1 alpha2 alpha : mult) (X : obj) (A : tp), *)
-    (* merge delta1 delta2 delta -> mult_op alpha1 alpha2 alpha -> merge (cons delta1 X A alpha1) (cons delta2 X A alpha2) (cons delta X A alpha). *)
+Inductive merge : forall {N : nat_alt}, lctx N -> lctx N -> lctx N -> Type :=
+| mg_n : merge nil nil nil
+| mg_c : forall {N} (delta1 delta2 delta : lctx N) (alpha1 alpha2 alpha : mult) (X : obj) (A : tp),
+    merge delta1 delta2 delta
+    -> mult_op alpha1 alpha2 alpha
+    -> merge (cons N delta1 X A alpha1) (cons N delta2 X A alpha2) (cons N delta X A alpha).
 
 (* --------------------------------------------------- *)
 (* Context pruning *)
