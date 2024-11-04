@@ -3,12 +3,10 @@
 
 # Main definitions
 common/defs/tp.v
-common/defs/nat_alt.v
 common/defs/obj.v
 common/defs/obj2.v
 common/defs/ctx.v
-common/defs/general.v
 common/defs/mult/lin_aff.v  
 
 # Lemmas
-common/lemmas/nat_alt/ineq.v
+# common/lemmas/nat_alt/ineq.v

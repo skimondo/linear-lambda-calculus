@@ -2,6 +2,8 @@
 (* General definition of types *)
 (* =================================================== *)
 
+Unset Automatic Proposition Inductives.
+
 Inductive tp : Type := .
 
 (* Type equality *)
