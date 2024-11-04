@@ -11,6 +11,7 @@
 
 # Ignore Makefile
 
+CoqMakefile.conf
 Makefile.conf
 Makefile
 .Makefile.d
