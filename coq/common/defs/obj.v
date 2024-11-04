@@ -2,7 +2,7 @@
 (* Objects *)
 (* =================================================== *)
 
-Unset Automatic Proposition Inductives.
+(* Unset Automatic Proposition Inductives. *)
 
 Inductive obj : Type := .
 
