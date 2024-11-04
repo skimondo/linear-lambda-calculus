@@ -28,6 +28,3 @@ linear-lambda-calculus
     └── setup_instructions.md 
 ```
 
-## Disclaimer
-
-Please note that errors may be present in this repository. I am by no means an expert in either Coq or Beluga and have limited experience with linear logic and proof assistants in general.

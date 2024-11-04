@@ -2,16 +2,16 @@
 
 ## How to run project
 
-*Execute inside coq directory*
+### Execute inside coq directory
 
 start by creating a Makefile using coq's congifuration `_CoqProject` file.
-In order to use `coq_makefile` command, you need at least `coq` and `make` installed. check[ dependencies](#dependencies)
+In order to use `coq_makefile` command, you need to have `coq` and `make` installed. check [dependencies](#dependencies)
 
 ```bash
 coq_makefile -f _CoqProject -o Makefile
 ```
 
-and the compile and run the project
+and then compile and run the project
 
 ```bash
 make
@@ -20,10 +20,10 @@ make
 Some frequently used `make` commands:
 
 - `make clean`
-- `make cleanall` use this when modifying `_CoqProject` file
+- `make cleanall` *use this when modifying `_CoqProject` file*
 - `make all.pdf`
 
-# Dependencies
+## Dependencies
 
 ```sh
 sudo apt-get install make
