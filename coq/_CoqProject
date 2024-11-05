@@ -16,4 +16,12 @@ common/lemmas/merge/unrid.v
 
 common/lemmas/mult_lemma/lin_aff.v
 
+common/lemmas/upd/lin_aff.v
+common/lemmas/upd/exch.v
+common/lemmas/upd/main.v
+
+common/lemmas/exh.v
 common/lemmas/obj_lemma.v
+common/lemmas/obj2_lemma.v
+common/lemmas/varctx.v
+common/lemmas/wf.v
