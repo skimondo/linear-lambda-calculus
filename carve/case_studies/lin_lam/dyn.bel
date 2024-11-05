@@ -1,9 +1,0 @@
-%======================================================%
-% Dynamics of the linear and affine λ-calculi
-%======================================================%
-
-LF step : obj → obj → type =
-| s/app1 : step M M' → step (app M N) (app M' N)
-| s/app2 : step N N' → step (app M N) (app M N')
-| s/lam : ({x:obj} step (M x) (M' x)) → step (lam M) (lam M')
-| s/red : step (app (lam M) N) (M N);

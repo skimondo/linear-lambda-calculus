@@ -1,8 +1,0 @@
-%------------------------------------------------------%
-% Dynamics of linear λ-calculus
-%------------------------------------------------------%
-
-LF step : tm → tm → type =
-| s/app : step M M' → step (app M N) (app M' N)
-| s/lam : ({x:tm} step (M x) (M' x)) → step (lam M) (lam M')
-| s/red : step (app (lam M) N) (M N);

@@ -1,8 +1,0 @@
-%======================================================%
-% Types for the linear and affine λ-calculi
-%======================================================%
-
-LF tp : type =
-| -o : tp → tp → tp
-| base : tp;
---infix -o 5 right.

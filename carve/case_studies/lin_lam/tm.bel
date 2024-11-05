@@ -1,9 +1,0 @@
-%======================================================%
-% Terms
-%======================================================%
-
-% λ-calculus terms as objects (using HOAS)
-
-LF obj : type =
-| lam : (obj → obj) → obj
-| app : obj → obj → obj;

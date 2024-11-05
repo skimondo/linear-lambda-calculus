@@ -1,9 +1,0 @@
-LF obj : type =
-| lam : (obj → obj) → obj
-| app : obj → obj → obj
-| ilam : (obj → obj) → obj
-| iapp : obj → obj → obj;
-
-LF obj_eq : obj → obj → type = obj/refl : obj_eq X X;
-
-schema ctx = obj;

@@ -1,4 +1,0 @@
-LF tp : type =
-| lolli : tp → tp → tp
-| imp : tp → tp → tp
-| base : tp;
