@@ -16,5 +16,3 @@ Makefile.conf
 Makefile
 .Makefile.d
 
-#VSCODE
-.vscode/

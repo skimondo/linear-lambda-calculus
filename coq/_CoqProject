@@ -1,12 +1,19 @@
 -R common/defs common
 -R common/lemmas common
 
+
 # Main definitions
 common/defs/tp.v
 common/defs/obj.v
 common/defs/obj2.v
 common/defs/ctx.v
-common/defs/mult/lin_aff.v  
+common/defs/mult/lin_aff.v
 
-# Lemmas
-# common/lemmas/nat_alt/ineq.v
+# Lemma files
+common/lemmas/merge/cancl.v
+common/lemmas/merge/main.v
+common/lemmas/merge/unrid.v
+
+common/lemmas/mult_lemma/lin_aff.v
+
+common/lemmas/obj_lemma.v
