@@ -3,9 +3,11 @@
 (* =================================================== *)
 
 Require Import common.obj.
+Require Import common.obj2.
 Require Import common.tp.
 Require Import Coq.Arith.PeanoNat.
 Require Import common.mult.lin_aff.
+
 
 (* --------------------------------------------------- *)
 (* Length-indexed typing contexts *)
@@ -89,8 +91,12 @@ Inductive lookup : obj -> tp -> mult -> forall {N : nat}, lctx N -> Prop :=
 
 (* Look up name *)
 
-Inductive lookup_n : obj -> forall {N : nat}, lctx N -> Prop :=
+(* Inductive lookup_n : obj -> forall {N : nat}, lctx N -> Prop :=
 | lookn : forall {N : nat} (delta delta' : lctx N) (X : obj) (A : tp) (alpha : mult) (n : nat),
+    upd delta n X X A A alpha alpha delta' -> lookup_n X delta. *)
+
+Inductive lookup_n : obj -> forall {N : nat}, lctx N -> Prop :=
+| lookn : forall {N : nat} (A : tp) (alpha : mult) (delta delta' : lctx N) (X : obj) (n : nat),
     upd delta n X X A A alpha alpha delta' -> lookup_n X delta.
 
 (* Look up index and name *)
@@ -127,8 +133,14 @@ Inductive Wf : forall {N : nat}, lctx N -> Prop :=
 (* TODO Ask if missing anuthing *)
 (* Context contains only variables from the LF context *)
 
-Inductive VarCtx : forall {N : nat}, lctx N -> Prop :=
+(* Inductive VarCtx : forall {N : nat}, lctx N -> Prop :=
 | VCtx_nil : VarCtx nil
 | VCtx_cons : forall {N : nat} (delta : lctx N) (p : obj) (A : tp) (alpha : mult),
     VarCtx delta ->
-    VarCtx (cons N delta p A alpha).
+    VarCtx (cons N delta p A alpha). *)
+
+Inductive VarCtx : ctx -> forall {N : nat}, lctx N -> Prop :=
+| VCtx_nil : VarCtx empty nil
+| VCtx_cons : forall {N : nat} (psi : ctx) (delta : lctx N) (x : obj) (A : tp) (alpha : mult),
+    VarCtx psi delta ->
+    VarCtx (extend x psi) (cons N delta x A alpha).

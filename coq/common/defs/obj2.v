@@ -37,3 +37,8 @@ Inductive PruneObj : ctx -> (obj -> obj) -> Prop :=
 Inductive CompareObjs (psi : ctx) (M N : obj) : Prop :=
 | Ct_Eq : M = N -> CompareObjs psi M N
 | Ct_Neq : M <> N -> CompareObjs psi M N.
+
+(* InCtx: Determines if an object is in a given context *)
+Inductive InCtx : ctx -> obj -> Prop :=
+| InCtx_top : forall (psi : ctx) (x : obj), InCtx (extend x psi) x
+| InCtx_pop : forall (psi : ctx) (x y : obj), InCtx psi x -> InCtx (extend y psi) x.

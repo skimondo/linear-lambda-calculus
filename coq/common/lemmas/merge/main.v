@@ -59,3 +59,37 @@ Qed.
 
 (* Functionality: If Δ₁ ⋈ Δ₂ = Δ and Δ₁ ⋈ Δ₂ = Δ', then Δ = Δ' *)
 
+Lemma merge_func :
+  forall {N : nat} (psi : ctx) (delta delta' delta1 delta2 : lctx N),
+    merge delta1 delta2 delta ->
+    merge delta1 delta2 delta' ->
+    cx_eq delta delta'.
+Admitted.
+
+(* Commutativity: If Δ₁ ⋈ Δ₂ = Δ, then Δ₂ ⋈ Δ₁ = Δ *)
+
+Lemma merge_comm :
+  forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
+    merge delta1 delta2 delta ->
+    merge delta2 delta1 delta.
+Admitted.
+
+(* Existence of identity context, i.e., Δ ⋈ 0Δ = Δ for any Δ *)
+
+(* Definition of mg_getid *)
+Inductive mg_getid {N : nat} : lctx N -> Type :=
+| merge_getid_cons : forall (delta delta' : lctx N),
+    merge delta delta' delta ->
+    exh delta' ->
+    mg_getid delta.
+
+Lemma merge_getid :
+  forall {N : nat} (psi : ctx) (delta : lctx N),
+    mg_getid delta.
+Admitted.
+
+(* Associativity *)
+(* (1) If (Δ₁ ⋈ Δ₂) ⋈ Δ₃ = Δ, then Δ₁ ⋈ (Δ₂ ⋈ Δ₃) *)
+(* (2) If (Δ₁ ⋈ Δ₂) ⋈ Δ₃ = Δ, then (Δ₁ ⋈ Δ₃) ⋈ Δ₂ [corollary of (1) using commutativity] *)
+
+

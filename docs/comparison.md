@@ -6,8 +6,7 @@ The same naming convection will be used, however some exceptions will be made to
 
 Here's a list of major differences :
 
-- **Modules**: TODO
-
+- **Modules**: Beluga relies on recursive function definitions (rec) to drive the proof logic, Coq uses a rich set of tactics to guide proofs, making proof development more interactive and adaptable
 Here's a list of minor differences :
 
 - **Predefined Types**: Coq includes predefined types, such as `nat`, which may have subtle differences from our target Beluga definitions. To maintain a direct translation from Beluga without relying on Coq's predefined `nat`, we rename `nat` to `nat_alt` in the Coq implementation.

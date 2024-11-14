@@ -21,3 +21,25 @@ Proof.
   inversion Hmult2; subst;
   apply mult_refl.
 Qed.
+
+
+
+(* Identity:  *)
+(* (1) If α₁ ∙ α₂ = α and α₁ is an identity element, then α₂ = α *)
+(* (2) For any α, obtain an identity element β such that β • α = α *)
+
+Lemma mult_id :
+  forall {alpha1 alpha2 alpha : mult},
+    mult_op alpha1 alpha2 alpha ->
+    ident alpha1 ->
+    mult_eq alpha2 alpha.
+Proof.
+  intros * Hmult Hident.
+  destruct Hident as [Hident_zero].
+  destruct alpha1.
+  - (* Case: alpha1 = zero *)
+    destruct Hmult;
+    apply mult_refl.
+  - (* Case: alpha1 = one (contradiction) *)
+    inversion Hident_zero.
+Qed.
