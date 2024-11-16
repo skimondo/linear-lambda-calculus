@@ -3,7 +3,6 @@
 (* =================================================== *)
 
 Require Import common.obj.
-Require Import common.obj2.
 Require Import common.ctx.
 Require Import common.tp.
 Require Import Coq.Arith.PeanoNat.

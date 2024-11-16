@@ -4,7 +4,6 @@
 (* =================================================== *)
 
 Require Import common.obj.
-Require Import common.obj2.
 Require Import common.ctx.
 
 (* For any objects M and N, either M = N or M ≠ N *)

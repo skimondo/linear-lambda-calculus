@@ -9,9 +9,9 @@ Inductive mult : Type :=
 (* α₁ • α₂ = α *)
 
 Inductive mult_op : mult -> mult -> mult -> Prop :=
-  | mult_op_us : mult_op zero zero zero  (* •/us rule *)
-  | mult_op_a1 : mult_op one zero one    (* •/a1 rule *)
-  | mult_op_a2 : mult_op zero one one.   (* •/a2 rule *)
+  | mult_op_us : mult_op zero zero zero
+  | mult_op_a1 : mult_op one zero one
+  | mult_op_a2 : mult_op zero one one.
 
 (* α is unavilable/consumed *)
 
@@ -27,5 +27,3 @@ Inductive ident : mult -> Prop :=
 
 Inductive mult_eq : mult -> mult -> Prop :=
 | mult_refl : forall alpha : mult, mult_eq alpha alpha.
-
-(* α₁ • α₂ = α₂ • α₁ *)

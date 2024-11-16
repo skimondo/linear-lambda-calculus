@@ -2,10 +2,11 @@
 (* Explicit contexts *)
 (* =================================================== *)
 
-Require Import common.obj.
-Require Import common.obj2.
-Require Import common.tp.
 Require Import Coq.Arith.PeanoNat.
+
+
+Require Import common.obj.
+Require Import common.tp.
 Require Import common.mult.lin_aff.
 
 

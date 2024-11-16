@@ -4,7 +4,7 @@
 (* =================================================== *)
 
 Require Import common.ctx.
-Require Import common.obj2.
+Require Import common.obj.
 
 (* Cancellativity: If Δ₁ ⋈ Δ₂ = Δ₁ ⋈ Δ₂', then Δ₂ = Δ₂' *)
 Lemma merge_cancl_lemma :

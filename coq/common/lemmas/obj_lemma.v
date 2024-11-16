@@ -3,7 +3,6 @@
 (* =================================================== *)
 
 Require Import common.obj.
-Require Import common.obj2.
 
 (* TODO TO BE VERIFIED *)
 

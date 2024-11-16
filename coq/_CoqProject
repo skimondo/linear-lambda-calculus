@@ -5,7 +5,6 @@
 # Main definitions
 common/defs/tp.v
 common/defs/obj.v
-common/defs/obj2.v
 common/defs/ctx.v
 common/defs/mult/lin_aff.v
 

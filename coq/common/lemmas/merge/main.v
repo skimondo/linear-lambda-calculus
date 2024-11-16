@@ -2,7 +2,6 @@
 (* Properties of context merge *)
 (* =================================================== *)
 
-Require Import common.obj2.
 Require Import common.ctx.
 Require Import common.tp.
 Require Import common.obj.
