@@ -1,0 +1,43 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Set up Coq environment
+    - name: Install Coq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make coq
+
+    # Compile and run Coq commands
+    - name: Build Coq Project
+      working-directory: ./coq
+      run: |
+        coq_makefile -f _CoqProject -o Makefile
+        make
+
+    # # Set up Beluga environment
+    # - name: Install Beluga
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y beluga
+
+    # # Run Beluga commands
+    # - name: Run Beluga
+    #   working-directory: ./beluga
+    #   run: |
+    #     beluga run_all.cfg
