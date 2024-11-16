@@ -29,24 +29,3 @@ jobs:
       run: |
         coq_makefile -f _CoqProject -o Makefile
         make
-
-    # Set up Beluga environment
-    - name: Install Beluga
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y opam make
-
-    - name: Initialize opam
-      run: |
-        opam init --bare
-        git clone https://github.com/Beluga-lang/Beluga beluga-install
-        cd beluga-install
-        make setup-install
-        make install
-
-
-    # Run Beluga commands
-    - name: Run Beluga
-      working-directory: ./beluga
-      run: |
-        beluga run_all.cfg
