@@ -2,11 +2,12 @@
 (* Properties of VarCtx predicate *)
 (* =================================================== *)
 
-Require Import common.ctx.
-Require Import common.obj.
-Require Import common.tp.
 Require Import Coq.Arith.PeanoNat.
-Require Import common.mult.lin_aff.
+
+Require Import common.defs.ctx.
+Require Import common.defs.obj.
+Require Import common.defs.tp.
+Require Import common.defs.lin_aff.
 
 (* If VarCtx [Ψ ⊢ Δ] and x ∈ Δ, then x is a parameter variable from Ψ *)
 Lemma varctx_isvar :

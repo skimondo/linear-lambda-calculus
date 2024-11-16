@@ -2,11 +2,12 @@
 (* Properties of Wf predicate *)
 (* =================================================== *)
 
-Require Import common.ctx.
-Require Import common.obj.
-Require Import common.tp.
 Require Import Coq.Arith.PeanoNat.
-Require Import common.mult.lin_aff.
+
+Require Import common.defs.ctx.
+Require Import common.defs.obj.
+Require Import common.defs.tp.
+Require Import common.defs.lin_aff.
 
 (* Proving properties about well-formedness requires a series of auxilliary technical lemmas about *)
 (* context membership like the following. *)

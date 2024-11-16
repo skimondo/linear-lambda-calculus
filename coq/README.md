@@ -50,7 +50,7 @@ To install the VS Code or VSCodium extension, first run code or codium. Then pre
 Finally, go to the extension settings and enter the vscoqtop full path from above in the field "Vscoq: Path".
 
 ```shell
-which coqtop
+which vscoqtop
 ```
 
 If you want asynchronous processing of Coq files, you can go to the "Proof: Mode" and select "Continuous". Otherwise, processing will step by step and top-down as in VsCoq1.

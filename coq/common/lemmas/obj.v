@@ -2,7 +2,7 @@
 (* General properties of objects *)
 (* =================================================== *)
 
-Require Import common.obj.
+Require Import common.defs.obj.
 
 (* TODO TO BE VERIFIED *)
 

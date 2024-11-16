@@ -3,8 +3,8 @@
 (* resource algebra operation being cancellative *)
 (* =================================================== *)
 
-Require Import common.ctx.
-Require Import common.obj.
+Require Import common.defs.ctx.
+Require Import common.defs.obj.
 
 (* Cancellativity: If Δ₁ ⋈ Δ₂ = Δ₁ ⋈ Δ₂', then Δ₂ = Δ₂' *)
 Lemma merge_cancl_lemma :

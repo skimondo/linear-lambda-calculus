@@ -3,8 +3,8 @@
 (* (assuming the type obj is uninhabited) *)
 (* =================================================== *)
 
-Require Import common.obj.
-Require Import common.ctx.
+Require Import common.defs.obj.
+Require Import common.defs.ctx.
 
 (* For any objects M and N, either M = N or M ≠ N *)
 

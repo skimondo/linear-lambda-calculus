@@ -5,7 +5,7 @@
 
 (* Remark: • is not total since 𝟙 • 𝟙 is undefined *)
 
-Require Import common.mult.lin_aff.
+Require Import common.defs.lin_aff.
 
 (* Functionality: If α₁ ∙ α₂ = α and α₁ ∙ α₂ = α', then α = α' *)
 

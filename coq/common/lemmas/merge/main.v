@@ -2,10 +2,10 @@
 (* Properties of context merge *)
 (* =================================================== *)
 
-Require Import common.ctx.
-Require Import common.tp.
-Require Import common.obj.
-Require Import common.mult.lin_aff.
+Require Import common.defs.ctx.
+Require Import common.defs.tp.
+Require Import common.defs.obj.
+Require Import common.defs.lin_aff.
 
 (* Basic properties of judgment *)
 
