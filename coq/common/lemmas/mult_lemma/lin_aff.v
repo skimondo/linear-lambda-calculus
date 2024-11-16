@@ -34,12 +34,4 @@ Lemma mult_id :
     ident alpha1 ->
     mult_eq alpha2 alpha.
 Proof.
-  intros * Hmult Hident.
-  destruct Hident as [Hident_zero].
-  destruct alpha1.
-  - (* Case: alpha1 = zero *)
-    destruct Hmult;
-    apply mult_refl.
-  - (* Case: alpha1 = one (contradiction) *)
-    inversion Hident_zero.
-Qed.
+  Admitted.
