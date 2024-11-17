@@ -10,7 +10,6 @@ Require Import common.defs.ctx.
 Require Import common.defs.tp.
 Require Import common.defs.lin_aff.
 
-
 (* --------------------------------------------------- *)
 (* Pruning lemmas *)
 (* --------------------------------------------------- *)
@@ -27,7 +26,6 @@ Proof.
   dependent destruction H.
   exact H.
 Qed.
-
 
 Lemma exh_lookup :
   forall {N : nat} (delta delta' : lctx N) (n : nat)
@@ -50,7 +48,6 @@ Qed.
 (* (1) If exh(Δ) and unr(β), then exh(Δ[x :α A ↦ₙ y :β B])  *)
 (* (2) If exh(Δ), then exh(Δ[x :α A ↦ₙ y :α B]) [corollary of (1) and exh_lookup] *)
 
-
 Lemma exh_changetp :
   forall {N : nat} (delta delta' : lctx N) (n : nat)
          (X Y : obj) (A B : tp) (alpha beta : mult),
@@ -58,8 +55,29 @@ Lemma exh_changetp :
     unr beta ->
     upd delta n X Y A B alpha beta delta' ->
     exh delta'.
-Admitted.
-
+Proof.
+  intros N delta delta' n X Y A B alpha beta H_exh H_unr H_upd.
+  generalize dependent delta'.
+  generalize dependent n.
+  induction H_exh as [| N delta0 x A0 alpha0 sub_exh IH alpha_unr].
+  - (* Base case: exh_n *)
+    intros n delta' H_upd.
+    inversion H_upd.
+  - (* Inductive case: exh_c *)
+    intros n delta' H_upd.
+    inversion H_upd; subst.
+    + (* Subcase: upd_t *)
+      apply exh_c.
+      * dependent destruction H. (* Align delta and delta0 *)
+        exact sub_exh.
+      * exact H_unr.
+    + (* Subcase: upd_n *)
+      dependent destruction H.  (* Align delta and delta0 *)
+      dependent destruction H12. (* Align delta' with the updated context *)
+      apply exh_c.
+      * apply IH with (n := n) (delta' := delta'0); assumption.
+      * exact alpha_unr.
+Qed.
 
 Lemma exh_changetp_cor :
   forall {N : nat} (delta delta' : lctx N) (n : nat)
@@ -67,4 +85,14 @@ Lemma exh_changetp_cor :
     exh delta ->
     upd delta n X Y A B alpha alpha delta' ->
     exh delta'.
-Admitted.
+Proof.
+  intros N delta delta' n X Y A B alpha H_exh H_upd.
+  (* Derive unr alpha using exh_lookup *)
+  assert (unr alpha) as H_unr.
+  {
+    (* Pass explicit arguments *)
+    apply (exh_lookup delta delta' n X Y A B alpha alpha H_exh H_upd).
+  }
+  (* Apply exh_changetp with the derived unr alpha *)
+  apply (exh_changetp delta delta' n X Y A B alpha alpha H_exh H_unr H_upd).
+Qed.

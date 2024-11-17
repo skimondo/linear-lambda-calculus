@@ -3,6 +3,7 @@
 (* =================================================== *)
 
 Require Import Coq.Arith.PeanoNat.
+Require Import Coq.Program.Equality.
 
 Require Import common.defs.ctx.
 Require Import common.defs.obj.
@@ -10,20 +11,45 @@ Require Import common.defs.tp.
 Require Import common.defs.lin_aff.
 
 (* If VarCtx [Ψ ⊢ Δ] and x ∈ Δ, then x is a parameter variable from Ψ *)
+
 Lemma varctx_isvar :
-  forall {N : nat} (psi : ctx) (delta delta' : lctx N) (n : nat)
-         (X X' : obj) (A A' : tp) (alpha alpha' : mult),
+  forall {N : nat} (psi : ctx) (delta delta' : lctx N) (X X' : obj) (A A' : tp) (alpha alpha' : mult) (n : nat),
     VarCtx psi delta ->
     upd delta n X X' A A' alpha alpha' delta' ->
     IsVar psi X.
-Admitted.
+Proof.
+  intros N psi delta delta' X X' A A' alpha alpha' n H_varctx H_upd.
+  generalize dependent psi.
+  induction H_upd as [
+      (* Case: upd_t *)
+      N delta X X' A A' alpha alpha' |
+      (* Case: upd_n *)
+      N delta delta' n X X' Y A A' B alpha alpha' beta H_upd IH].
+  - (* Case: upd_t *)
+    intros psi H_varctx.
+    inversion H_varctx as [| N' psi' delta' Y' B' beta' H_varctx_sub H_unique]; subst.
+    (* X is at the top of the context, and the parent context is `psi` *)
+    apply IsVar_intro.
+  - (* Case: upd_n *)
+    intros psi H_varctx.
+    (* Decompose the VarCtx for (cons N delta Y B beta) *)
+    inversion H_varctx as [| N' psi' delta_sub Y' B' beta' H_varctx_sub H_unique]; subst.
+    (* Apply the IH to the sub-context delta *)
+    apply IH.
+    Abort.
+    (* exact H_varctx_sub.
+Qed. *)
 
-(* Extend VarCtx judgment with new variable of type obj *)
 Lemma varctx_ext :
   forall {N : nat} (psi : ctx) (delta : lctx N) (x : obj),
     VarCtx psi delta ->
     VarCtx (extend x psi) delta.
 Admitted.
+
+
+
+
+
 
 (* Extending a context with a fresh variable preserves VarCtx predicate *)
 Lemma varctx_extcons :
