@@ -1,0 +1,115 @@
+% --------------------------
+% Document class
+% --------------------------
+\documentclass[
+A4paper,                % paper size A4
+twoside,                % onesite or twoside printing
+openany,                % openright or openany for new chapter
+chapterprefix=false,    % prefix for chapter marks
+12pt,                   % font size
+headings=normal,        % size of headings
+titlepage=on            % own page for each title page
+]{book}
+
+% **************************************************
+% THESIS details
+% **************************************************
+
+\input{thesisDetails}
+
+% **************************************************
+% Settings
+% **************************************************
+
+\input{settings}
+
+% **************************************************
+% Begin document
+% **************************************************
+\begin{document}
+
+% --------------------------
+% Cover and front matter
+% --------------------------
+\frontmatter
+\pagestyle{empty}				    % no header nor footer
+\input{frontmatter/1_cover}
+\newpage
+
+% \input{frontmatter/2_frontpage}
+% \newpage
+
+\pagenumbering{roman}			    % roman page numbering 
+\pagestyle{plain}				    % empty header, just page number in footer
+
+% \input{frontmatter/3_teseo}
+% \cleardoublepage
+
+% \input{frontmatter/4_dedication}   % dedication (optional)
+% \cleardoublepage
+
+\input{frontmatter/5_acknowledgement}  % acknowledgement (optional)
+\newpage
+
+\input{frontmatter/6_abstract}
+\newpage
+
+\selectlanguage{french}   
+
+\setcounter{tocdepth}{3}		% define depth of toc
+\addcontentsline{toc}{section}{\contentsname}
+\tableofcontents				% display table of contents
+
+
+% \addcontentsline{toc}{section}{Liste de Figures}
+% \listoffigures
+
+
+% \addcontentsline{toc}{section}{Liste de Tables}
+% \listoftables
+\newpage
+
+\input{frontmatter/7_acronyms}
+\cleardoublepage
+
+% --------------------------
+% Main matter
+% --------------------------
+\mainmatter
+\pagenumbering{arabic}			% arabic page numbering
+\setcounter{page}{1}			% set page counter
+\pagestyle{fancy} 	            % fancy header and footer
+\parskip=7pt                    % space after each paragraph
+\parindent=0pt                  % suppress indentation of paragraphs
+
+
+% Capítulos
+\include{mainmatter/chapter1}
+\include{mainmatter/chapter2}
+\include{mainmatter/chapter3}
+\include{mainmatter/chapter4}
+\include{mainmatter/chapter5}
+\include{mainmatter/chapter6}
+
+% \cleardoublepage
+
+% --------------------------
+% Back matter
+% --------------------------
+
+
+\backmatter
+\nocite{*}
+\printbibliography[title=Références, heading=bibintoc]
+
+\appendix
+
+\chapter{Bibliographie}  
+
+\chapter{Annexes}
+
+% **************************************************
+% End of document
+% **************************************************
+\end{document}
+

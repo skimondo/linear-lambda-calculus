@@ -1,0 +1,100 @@
+% **************************************************
+% Settings
+% **************************************************
+% --------------------------
+% Packages
+% --------------------------
+% \usepackage[spanish,english,es-tabla]{babel}
+\usepackage[french,english,spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}     % Use a modern font (that is not pixelated)
+\usepackage[protrusion=true, expansion=true]{microtype}  % Use microtype to improve readability
+\usepackage{amsmath,amssymb} 
+\usepackage{tabularx}    % tables spanning the full text width
+\usepackage{multicol}    % multi-columns in tables
+\usepackage{multirow}    % multi-rows in tables
+\usepackage{longtable}   % tables spanning more than one page
+\usepackage{booktabs}    % nicer horizontal rules in tables
+\usepackage{ltablex}
+\usepackage{setspace}
+\usepackage{tikz}                % drawing custom shapes
+\usepackage{graphicx,graphics}   % packages to manage images
+\usepackage{subfigure}           % display two figures next to each other
+\usepackage[export]{adjustbox}
+\usepackage{ragged2e} 
+\usepackage{comment} 
+\usepackage{blindtext}
+\usepackage[acronym,nonumberlist,nomain]{glossaries}  % package for list of acronyms
+\usepackage{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{parskip}     % paragraph spacing (suppress indentation)
+\usepackage{fancyhdr}    % personalizar encabezado
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{emptypage}   % no headers in empty pages
+\usepackage[small,hang,bf]{caption}    % caption options
+\usepackage{subcaption}
+
+% Added by me
+\usepackage{titlesec}
+
+% Customize chapter title format
+\titleformat{\chapter}[hang]
+  {\normalfont\LARGE\bfseries}  % Font style: Large and bold
+  {\thechapter.}                % Chapter number followed by a dot
+  {1em}                         % Space between the number and title
+  {}                            % Code before the title
+
+%%% BIBLIOGRAPHY
+% The style used is APA. A list of available styles is available  at https://www.overleaf.com/learn/latex/Biblatex_bibliography_styles
+
+\usepackage[
+backend=biber,
+style=apa,
+sorting=nyt,
+doi=true,
+url=false,
+isbn=false,
+backref=false
+]{biblatex}
+
+% The .bib files in included here
+\addbibresource{thesisRefs.bib}
+
+% --------------------------
+% Customize document
+% --------------------------
+% Define the geometry of the document
+\newgeometry {top=2.5cm, bottom=2.5cm, right=2.5cm, left=2.5cm}
+
+\setlength{\parskip}{10pt}   % Change the default value
+
+% hiperlinks
+\hypersetup{
+    colorlinks=true,          % Enable colored links
+    linkcolor=black,          % Color for internal links
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% Header and footer
+\fancyhf{}   % Clear the default header and footer
+\renewcommand{\headrulewidth}{0.2pt}
+ 
+% \fancyhead[RO]{\nouppercase \leftmark}  % Define the header for odd and even pages
+% \fancyhead[LE]{\thesisAuthor}           % Define the header for odd and even pages
+\fancyhead[RO]{\nouppercase{\leftmark}}  % Display only the chapter title without the chapter number
+\fancyhead[LE]{\nouppercase{\leftmark}}  % Display only the chapter title without the chapter number
+
+\fancyfoot[C]{\thepage}
+
+\addto\captionsfrench{\renewcommand{\contentsname}{Table des Matières}}
+\addto\captionsfrench{\renewcommand{\listfigurename}{Liste des Figures}}
+\addto\captionsfrench{\renewcommand{\listtablename}{Liste des Tableaux}}
+
+% Increase indentation in lists
+\newlist{mydescription}{description}{1}
+\setlist[mydescription,1]{labelindent=2em, leftmargin=2em}
+
+
