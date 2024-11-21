@@ -10,6 +10,10 @@ Require Import common.defs.obj.
 Require Import common.defs.tp.
 Require Import common.defs.lin_aff.
 
+Require Import common.lemmas.merge.main.
+
+(* VarCtx predicate *)
+
 (* If VarCtx [Ψ ⊢ Δ] and x ∈ Δ, then x is a parameter variable from Ψ *)
 
 Lemma varctx_isvar :
@@ -46,11 +50,6 @@ Lemma varctx_ext :
     VarCtx (extend x psi) delta.
 Admitted.
 
-
-
-
-
-
 (* Extending a context with a fresh variable preserves VarCtx predicate *)
 Lemma varctx_extcons :
   forall {N : nat} (psi : ctx) (delta : lctx N) (x : obj) (A : tp) (alpha : mult),
@@ -59,6 +58,30 @@ Lemma varctx_extcons :
 Admitted.
 
 (* If VarCtx [Ψ ⊢ Δ] and Δ₁ ⋈ Δ₂ = Δ, then VarCtx [Ψ ⊢ Δ₁] *)
+Lemma varctx_merge' :
+  forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
+    VarCtx psi delta ->
+    merge delta1 delta2 delta ->
+    VarCtx psi delta1.
+Admitted.
+
+(* If VarCtx [Ψ ⊢ Δ] and Δ₁ ⋈ Δ₂ = Δ, then VarCtx [Ψ ⊢ Δ₁] *)
+Lemma varctx_merge'' :
+  forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
+    VarCtx psi delta ->
+    merge delta1 delta2 delta ->
+    VarCtx psi delta1.
+Proof.
+  intros N psi delta delta1 delta2 H_varctx H_merge.
+  generalize dependent delta1.
+  generalize dependent delta2.
+  induction H_varctx as [| N psi delta x A alpha H_varctx' IH].
+  - (* Base case: VarCtx psi nil *)
+    intros delta1 delta2 H_merge.
+    inversion H_merge. (* Only possible merge is mg_n *)
+    Admitted.
+
+
 Lemma varctx_merge :
   forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
     VarCtx psi delta ->
@@ -66,10 +89,18 @@ Lemma varctx_merge :
     VarCtx psi delta1.
 Admitted.
 
-(* If VarCtx [Ψ ⊢ Δ] and Δ₁ ⋈ Δ₂ = Δ, then VarCtx [Ψ ⊢ Δ₂] *)
+
 Lemma varctx_merge_r :
   forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
     VarCtx psi delta ->
     merge delta1 delta2 delta ->
     VarCtx psi delta2.
 Admitted.
+(* Proof.
+  intros N psi delta delta1 delta2 H_varctx H_merge.
+  (* Use commutativity of merge *)
+  apply varctx_merge.
+  apply merge_comm.
+  exact H_merge.
+Qed. *)
+

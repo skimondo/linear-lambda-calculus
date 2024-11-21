@@ -67,11 +67,29 @@ Admitted.
 
 (* Commutativity: If Δ₁ ⋈ Δ₂ = Δ, then Δ₂ ⋈ Δ₁ = Δ *)
 
-Lemma merge_comm :
+Lemma merge_comm' :
   forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
     merge delta1 delta2 delta ->
     merge delta2 delta1 delta.
 Admitted.
+
+Lemma merge_comm :
+  forall {N : nat} (delta delta1 delta2 : lctx N),
+    merge delta1 delta2 delta ->
+    merge delta2 delta1 delta.
+Proof.
+  intros N delta delta1 delta2 H_merge.
+  induction H_merge as [
+    (* Base Case: merge nil nil nil *)
+    | N delta1 delta2 delta context resource1 resource2 merged_context IH_merge H_mult
+  ].
+  - (* Base Case *)
+    constructor. (* merge nil nil nil is symmetric *)
+  - (* Inductive Case *)
+    Admitted.
+(* Qed. *)
+
+
 
 (* Existence of identity context, i.e., Δ ⋈ 0Δ = Δ for any Δ *)
 
