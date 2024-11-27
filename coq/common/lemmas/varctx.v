@@ -58,30 +58,6 @@ Lemma varctx_extcons :
 Admitted.
 
 (* If VarCtx [Ψ ⊢ Δ] and Δ₁ ⋈ Δ₂ = Δ, then VarCtx [Ψ ⊢ Δ₁] *)
-Lemma varctx_merge' :
-  forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
-    VarCtx psi delta ->
-    merge delta1 delta2 delta ->
-    VarCtx psi delta1.
-Admitted.
-
-(* If VarCtx [Ψ ⊢ Δ] and Δ₁ ⋈ Δ₂ = Δ, then VarCtx [Ψ ⊢ Δ₁] *)
-Lemma varctx_merge'' :
-  forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
-    VarCtx psi delta ->
-    merge delta1 delta2 delta ->
-    VarCtx psi delta1.
-Proof.
-  intros N psi delta delta1 delta2 H_varctx H_merge.
-  generalize dependent delta1.
-  generalize dependent delta2.
-  induction H_varctx as [| N psi delta x A alpha H_varctx' IH].
-  - (* Base case: VarCtx psi nil *)
-    intros delta1 delta2 H_merge.
-    inversion H_merge. (* Only possible merge is mg_n *)
-    Admitted.
-
-
 Lemma varctx_merge :
   forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
     VarCtx psi delta ->
@@ -89,18 +65,43 @@ Lemma varctx_merge :
     VarCtx psi delta1.
 Admitted.
 
+(* If VarCtx [Ψ ⊢ Δ] and Δ₁ ⋈ Δ₂ = Δ, then VarCtx [Ψ ⊢ Δ₁] *)
+
+
+(* Lemma varctx_merge' :
+  forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
+    VarCtx psi delta ->
+    merge delta1 delta2 delta ->
+    VarCtx psi delta1.
+Proof.
+  intros N psi delta delta1 delta2 H_varctx H_merge.
+  (* Induction on the structure of the merge proof *)
+  induction H_merge as [| N delta1 delta2 delta alpha1 alpha2 alpha X A H_merge IH_mult_op].
+  - (* Base case: mg_n *)
+    (* delta1, delta2, and delta are all empty, so VarCtx psi delta1 (empty) holds *)
+    inversion H_varctx; subst.
+    constructor.
+  - (* Inductive case: merge (cons N delta1 ...) (cons N delta2 ...) (cons N delta ...) *)
+    (* delta = cons N delta X A alpha *)
+    inversion H_varctx; subst.
+    (* Rewrite the goal to match the context using H1 *)
+    (* rewrite <- H1 in *. *)
+    (* Use the inductive hypothesis *)
+    apply IH_mult_op.
+    assumption.
+Qed. *)
 
 Lemma varctx_merge_r :
   forall {N : nat} (psi : ctx) (delta delta1 delta2 : lctx N),
     VarCtx psi delta ->
     merge delta1 delta2 delta ->
     VarCtx psi delta2.
-Admitted.
-(* Proof.
+Proof.
   intros N psi delta delta1 delta2 H_varctx H_merge.
   (* Use commutativity of merge *)
-  apply varctx_merge.
-  apply merge_comm.
+  apply (varctx_merge psi delta delta2 delta1 H_varctx).
+  (* - exact H_varctx. Solve Goal 1: VarCtx psi delta *)
+  apply merge_comm. (* Solve Goal 2: merge delta2 delta1 delta *)
   exact H_merge.
-Qed. *)
+Qed.
 

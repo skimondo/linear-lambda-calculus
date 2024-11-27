@@ -4,9 +4,8 @@
 
 Require Import common.defs.obj.
 
-(* TODO TO BE VERIFIED *)
-
 (* Weaken object inequality judgment *)
+
 Lemma neq_weak_v :
   forall (Psi : ctx) (M N : obj),
     (obj_eq M N -> False) -> (forall x : obj, obj_eq M N -> False).
@@ -18,6 +17,7 @@ Proof.
 Qed.
 
 (* Object inequality is commutative *)
+
 Lemma neq_comm_v :
   forall (Psi : ctx) (M N : obj),
     (obj_eq M N -> False) -> (obj_eq N M -> False).
