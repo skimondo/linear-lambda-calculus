@@ -27,3 +27,4 @@ Inductive ident : mult -> Prop :=
 
 Inductive mult_eq : mult -> mult -> Prop :=
 | mult_refl : forall alpha : mult, mult_eq alpha alpha.
+

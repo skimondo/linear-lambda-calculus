@@ -17,6 +17,30 @@ Require Import common.lemmas.merge.main.
 (* If VarCtx [Ψ ⊢ Δ] and x ∈ Δ, then x is a parameter variable from Ψ *)
 
 Lemma varctx_isvar :
+  forall {N : nat} {Ψ : ctx} {Δ Δ' : lctx N} {X X' : obj} {A A' : tp} {α α' : mult} {n : nat},
+    VarCtx Ψ Δ ->
+    upd Δ n X X' A A' α α' Δ' ->
+    IsVar Ψ X.
+Proof.
+  intros N Ψ Δ Δ' X X' A A' α α' n H_varctx H_upd.
+  generalize dependent Ψ.
+  induction H_upd as [
+      (* Case: upd_t *)
+      N delta X X' A A' alpha alpha' |
+      (* Case: upd_n *)
+      N delta delta' n X X' Y A A' B alpha alpha' beta H_upd IH].
+  - (* Case: upd_t *)
+    intros psi H_varctx.
+    inversion H_varctx as [| N' psi' delta' Y' B' beta' H_varctx_sub H_unique]; subst.
+    (* The head of the context matches X *)
+    apply IsVar_intro.
+  - (* Case: upd_n *)
+    intros psi H_varctx.
+    (* Decompose the VarCtx for (cons N delta Y B beta) *)
+    inversion H_varctx as [| N' psi' delta_sub Y' B' beta' H_varctx_sub H_unique]; subst.
+    Abort.
+
+Lemma varctx_isvar' :
   forall {N : nat} (psi : ctx) (delta delta' : lctx N) (X X' : obj) (A A' : tp) (alpha alpha' : mult) (n : nat),
     VarCtx psi delta ->
     upd delta n X X' A A' alpha alpha' delta' ->
