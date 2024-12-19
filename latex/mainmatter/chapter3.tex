@@ -1,9 +1,62 @@
-% called by main.tex
-%
-\chapter{Lambda-calcul linéaire}
+\chapter{CARVe}
 \label{sec::chapitre3}
 
-\section{Lambda-calcul}
-\subsection{Lambda-calcul non typé}
-\subsection{Lambda-calcul simplement typé}
-\subsection{Lambda-calcul linéaire}
+\section{Introduction}
+Le cadre de vérification et d'encodage des ressources contextuelles (CARVe \textit{Contexts as Resource Vectors}) vise à relever les défis liés à la mécanisation des systèmes sous-structuraux, en particulier ceux qui sont sensibles aux ressources, comme la logique linéaire. Ce chapitre présente les objectifs, les méthodologies et les implications de CARVe dans le contexte des systèmes formels et de la mécanisation des preuves.
+
+\section{Systèmes formels et mécanisation des preuves}
+Les systèmes formels garantissent la correction des programmes bien typés. Historiquement, ces garanties étaient vérifiées manuellement, un processus fastidieux et sujet aux erreurs. Les assistants de preuve automatisent le processus de vérification et offrent des garanties formelles de correction. Cependant, la mécanisation des preuves reste très coûteuse en termes de travail et nécessite une expertise approfondie dans les assistants de preuve et les systèmes à encoder.
+
+\section{Logiques sous-structurales}
+Les logiques sous-structurales se caractérisent par leur contrôle sur les règles structurelles, notamment l'affaiblissement, la contraction et l'échange. Ces règles gouvernent la manière dont les hypothèses dans un contexte peuvent être manipulées. Voici quelques exemples de systèmes sous-structuraux :
+
+\begin{itemize}
+    \item \textbf{Logique linéaire} : Les hypothèses doivent être utilisées exactement une fois.
+    \item \textbf{Systèmes affines} : Les hypothèses peuvent être utilisées au plus une fois.
+    \item \textbf{Systèmes ordonnés} : Les hypothèses doivent être utilisées dans un ordre spécifique.
+\end{itemize}
+
+La gestion de ces contraintes dans la mécanisation est non triviale, notamment en raison de la manipulation explicite des contextes et de la sensibilité aux ressources.
+
+\section{Défis de mécanisation}
+Les systèmes sous-structuraux introduisent des complexités dans la gestion des contextes, telles que leur division et leur fusion, qui ne sont pas évidentes à encoder. Les approches traditionnelles, comme les techniques nominales ou les indices de de Bruijn, échouent souvent à s'adapter efficacement en raison de la complexité de la gestion des liaisons de variables et des dépendances contextuelles.
+
+\section{Solution proposée : CARVe}
+Le cadre CARVe introduit des contextes annotés par des ressources pour simplifier la mécanisation des systèmes sous-structuraux. Les contextes sont modélisés comme des listes, chaque élément étant étiqueté pour indiquer son état de ressource :
+
+\begin{itemize}
+    \item \textbf{0} : Désigne une ressource épuisée.
+    \item \textbf{1} : Désigne une ressource active.
+\end{itemize}
+
+Cette approche permet un raisonnement systématique et algébrique sur les opérations contextuelles, telles que les divisions et les fusions, évitant ainsi les pièges des méthodes traditionnelles.
+
+\subsection{Caractéristiques clés}
+\begin{itemize}
+    \item Les annotations explicites des ressources garantissent une gestion correcte des ressources.
+    \item La manipulation des contextes est effectuée de manière algébrique, améliorant la clarté et la simplicité.
+    \item Le cadre reste fidèle aux formulations théoriques sur papier.
+\end{itemize}
+
+\section{Mise en oeuvre}
+Le cadre CARVe a été implémenté dans l'assistant de preuve Beluga. Il a été appliqué à diverses études de cas, notamment :
+
+\begin{itemize}
+    \item Les calculs de processus avec types session.
+    \item Les systèmes affines et linéaires.
+    \item Les lambda-calculs linéaires.
+\end{itemize}
+
+Ces implémentations démontrent la polyvalence du cadre et son efficacité dans des systèmes sous-structuraux variés.
+
+\section{Perspectives}
+Les travaux futurs visent à étendre CARVe en :
+
+\begin{itemize}
+    \item Incorporant des relations logiques pour prouver l'équivalence entre les encodages.
+    \item Élargissant le cadre pour prendre en charge des systèmes plus riches, comme ceux avec des exponentiels en logique linéaire.
+    \item Améliorant les techniques de preuve pour des paramètres sous-structuraux plus complexes.
+\end{itemize}
+
+\section{Conclusion}
+CARVe fournit une infrastructure compacte et systématique pour modéliser les systèmes sous-structuraux, résolvant des problèmes de longue date dans la mécanisation. En comblant le fossé entre les formulations théoriques et les implémentations pratiques, CARVe ouvre la voie à de nouvelles avancées en ingénierie des preuves et dans les cadres de logique sous-structurale.
