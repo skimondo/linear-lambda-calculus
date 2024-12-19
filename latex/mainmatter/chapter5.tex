@@ -4,8 +4,63 @@
 \label{sec::chapitre5}
 
 \section{CompCert}
+CompCert est un compilateur certifié conçu pour le langage C, utilisé dans des systèmes critiques où la fiabilité est primordiale. Contrairement aux compilateurs traditionnels, CompCert garantit mathématiquement que le code machine généré respecte exactement le comportement spécifié dans le code source. Ce niveau de confiance est obtenu grâce à l'utilisation de méthodes de vérification formelle, rendant CompCert unique et indispensable dans des secteurs comme l’aéronautique, l’automobile ou les dispositifs médicaux.
+
+\subsection{Origines et Historique}
+Le développement de CompCert a débuté dans les années 2000 sous la direction de Xavier Leroy, au sein de l’Institut national de recherche en informatique et en automatique (INRIA). L’objectif était de répondre à un problème fondamental : les compilateurs traditionnels contiennent souvent des bogues subtils qui peuvent entraîner des comportements imprévisibles dans les logiciels.
+
+Pour résoudre ce problème, CompCert a été conçu en utilisant Coq, un assistant de preuve. Ce logiciel permet de formuler et de vérifier formellement les preuves logiques, assurant ainsi que chaque étape de la compilation est correcte. Grâce à Coq, chaque transformation effectuée par le compilateur peut être prouvée sans erreur, éliminant les incertitudes souvent associées à des compilateurs conventionnels.
+
+\subsection{Utilisations Pratiques de CompCert}
+CompCert s’illustre particulièrement dans des environnements critiques où les erreurs logicielles peuvent avoir des conséquences graves. Par exemple :
+
+\begin{itemize}
+    \item \textbf{Aéronautique et spatial} : Les logiciels embarqués dans les avions doivent répondre à des normes extrêmement strictes en matière de sécurité. CompCert offre une garantie formelle que le code machine généré est conforme aux spécifications du code source.
+    \item \textbf{Dispositifs médicaux} : Les logiciels contrôlant des appareils comme les stimulateurs cardiaques nécessitent une fiabilité absolue, où une défaillance pourrait mettre des vies en danger.
+    \item \textbf{Industrie automobile} : Les systèmes embarqués comme les contrôleurs de freinage ou les régulateurs de vitesse autonome bénéficient de la sûreté offerte par CompCert.
+\end{itemize}
+
+\subsection{Un Exemple Concret de l’Utilisation de Coq}
+CompCert est l’une des applications les plus emblématiques de Coq, démontrant son potentiel dans la programmation. Coq, en tant qu’assistant de preuve, permet de formaliser les transformations réalisées par le compilateur et de prouver leur correction. Cela automatise des tâches extrêmement complexes, tout en réduisant les erreurs humaines. Grâce à cette approche, CompCert prouve qu’il est possible d’allier performance et rigueur mathématique dans le développement logiciel.
 
 \section{cakeML}
+CakeML est un langage de programmation fonctionnel accompagné d’un compilateur formellement vérifié. Il s’inscrit dans la famille des langages fonctionnels comme OCaml ou Haskell, privilégiant des abstractions puissantes pour simplifier le développement logiciel. CakeML est unique en ce qu’il intègre des méthodes formelles pour assurer la correction non seulement du langage, mais aussi de son compilateur. Cela signifie que chaque transformation, du code source au code machine, est mathématiquement prouvée correcte, offrant ainsi une fiabilité exceptionnelle.
+
+\subsection{Histoire et Développement}
+CakeML a vu le jour dans les années 2010 comme un projet académique visant à démontrer qu’un langage de programmation et son compilateur pouvaient être vérifiés dans leur intégralité. Il repose sur des outils d’assistance à la preuve comme HOL4 (Higher-Order Logic), un système permettant de formaliser des théories mathématiques complexes. Le projet a été conçu dès le départ pour répondre à une problématique essentielle : les erreurs dans les compilateurs. Ces erreurs peuvent introduire des comportements imprévisibles et coûteux, en particulier dans des contextes critiques.
+
+CakeML utilise HOL4 pour automatiser les preuves formelles nécessaires à garantir la fiabilité des transformations du compilateur. Cela inclut des étapes complexes comme l’analyse lexicale, la génération de code intermédiaire et l’optimisation du code machine.
+
+\subsection{Utilisations Pratiques de CakeML}
+CakeML trouve son utilité dans plusieurs domaines :
+
+\begin{itemize}
+    \item \textbf{Vérification des langages fonctionnels} : CakeML démontre qu’il est possible de concevoir des langages entièrement vérifiés, où la sémantique du langage et les résultats produits sont garantis par des preuves mathématiques.
+    \item \textbf{Systèmes embarqués} : Les systèmes critiques comme ceux utilisés dans l’aérospatiale ou la médecine peuvent tirer parti de CakeML pour développer des applications sûres et fiables.
+    \item \textbf{Éducation et recherche} : CakeML est utilisé comme un exemple pratique pour enseigner les concepts de vérification formelle et de compilation.
+    \item \textbf{Applications blockchain} : CakeML a été exploré dans des projets liés à la blockchain, où la fiabilité et la sécurité des programmes exécutés sur des nœuds distribués sont primordiales.
+\end{itemize}
+
+\subsection{CakeML : Une Application des Preuves Formelles}
+CakeML illustre de manière concrète le rôle des assistants de preuve dans des projets réels. Les développeurs de CakeML ont utilisé HOL4 pour prouver la correction de chaque étape du compilateur. Cela automatise les tâches les plus complexes de vérification, garantissant l’absence d’erreurs dans les processus critiques. Cette rigueur mathématique confère à CakeML un caractère exceptionnel : il prouve qu’un langage de programmation et son compilateur peuvent être entièrement dignes de confiance, ce qui est crucial dans des contextes exigeant une grande sécurité.
+
+\subsection{Pourquoi CakeML est un Projet Inspirant}
+CakeML est bien plus qu’un simple langage fonctionnel. Il s’agit d’un exemple emblématique des possibilités offertes par les assistants de preuve. En intégrant la vérification formelle dans la conception d’un langage, CakeML démontre que les preuves mathématiques ne sont pas limitées à la théorie, mais peuvent transformer des pratiques courantes du développement logiciel.
+
 
 \section{Crary}
+Karl Crary est un chercheur éminent dans le domaine des langages de programmation, reconnu pour ses contributions significatives à la théorie des types et à la vérification formelle. Ses travaux se concentrent sur l'application des assistants de preuve, tels que Coq, pour assurer la correction et la sécurité des programmes informatiques.
 
+\subsection{Contributions aux Langages de Programmation}
+Crary a développé des méthodologies basées sur la théorie des types pour relier directement les langages de programmation pratiques à des fondations mathématiques solides. Dans sa thèse intitulée \textit{Type-Theoretic Methodology for Practical Programming Languages} (\url{https://www.cs.cmu.edu/~crary/papers/1998/thesis/thesis.pdf}), il présente des techniques permettant d'interpréter les langages de programmation dans le cadre de la théorie des types, facilitant ainsi la vérification formelle de programmes complexes.
+
+\subsection{Utilisation des Assistants de Preuve}
+Les recherches de Crary exploitent des assistants de preuve comme Coq pour formaliser et vérifier des propriétés essentielles des programmes. En utilisant Coq, il a contribué à la création de compilateurs certifiés, garantissant que le code source est transformé en code machine sans introduire d'erreurs. Cette approche améliore la fiabilité des logiciels, notamment dans des systèmes critiques où la sécurité est primordiale.
+
+\subsection{Exemples Concrets d'Applications}
+Parmi les applications notables de ses recherches, on trouve le développement de compilateurs certifiés pour des langages fonctionnels. Ces compilateurs utilisent Coq pour prouver formellement la correction des transformations effectuées lors de la compilation, assurant ainsi que le comportement du programme source est préservé dans le code compilé. De plus, Crary a travaillé sur des systèmes de vérification formelle qui utilisent des assistants de preuve pour automatiser la vérification de propriétés complexes dans les programmes, réduisant ainsi les erreurs humaines et augmentant l'efficacité du processus de développement logiciel.
+
+\subsection{Impact sur les Outils comme Coq}
+Les travaux de Crary ont influencé l'évolution des assistants de preuve en démontrant leur applicabilité pratique dans le développement de logiciels fiables. En intégrant des méthodes formelles dans des outils de programmation, il a contribué à élargir l'utilisation de Coq et d'autres assistants de preuve au-delà du milieu académique, les rendant pertinents pour l'industrie du logiciel. Ses recherches ont également inspiré des améliorations dans ces outils, les rendant plus accessibles et efficaces pour les développeurs.
+
+Les contributions de Karl Crary illustrent l'importance des assistants de preuve dans la résolution automatisée de problèmes complexes en informatique. En appliquant des méthodes formelles à la conception et à la vérification des langages de programmation, ses travaux ont permis de renforcer la fiabilité et la sécurité des systèmes logiciels, ouvrant la voie à des développements futurs dans le domaine des assistants de preuve et de la vérification formelle.
