@@ -5,20 +5,42 @@
 
 \section{Contexte}
 
+La logique linéaire est au cœur de nombreux systèmes formels modernes, notamment en programmation quantique et en systèmes concurrents. Introduite pour gérer des ressources de manière stricte et contrôlée, elle impose que chaque hypothèse soit utilisée exactement une fois. Cette contrainte en fait un cadre idéal pour modéliser des domaines où les ressources ne peuvent pas être copiées ou détruites arbitrairement, comme en mécanique quantique ou dans des systèmes critiques.
 
-Parler ici de la motivation, relevance of programmation quantique, etc. concurrencts (Message-Passing) CP (To not be confsed with concurecnt programming and parallel programming) and the need for a formal verification of these systems.
+Dans la programmation quantique, la logique linéaire reflète directement les principes fondamentaux de la mécanique quantique, tels que les théorèmes de non-clonage et de non-suppression. Les langages comme ProtoQuipper exploitent ces concepts pour gérer efficacement les états quantiques et leurs transformations. Parallèlement, en programmation concurrente, la logique linéaire est utilisée pour formaliser les interactions entre processus via les types session, assurant la conformité des protocoles et la sécurité des communications.
 
-On veut pouvoir assurer leurs props de surete de facon foremelt, qlq exemple son: CompCert, 
-
+Ces domaines démontrent le rôle crucial de la logique linéaire dans la construction de systèmes sûrs et fiables, où chaque ressource doit être précisément contrôlée.
 
 \section{Motivation}
 
-Parler de motv
+La logique linéaire est au centre de ce travail en raison de son utilité pour modéliser et vérifier des systèmes complexes. En particulier, elle permet de :
+
+\begin{itemize}
+    \item Garantir une gestion rigoureuse des ressources dans les langages de programmation formels.
+    \item Formaliser les interactions concurrentes avec des types session partagés, où plusieurs processus peuvent interagir en toute sécurité avec un même fournisseur.
+    \item Représenter les contraintes spécifiques de la mécanique quantique dans un cadre formel, alignant les principes physiques avec des outils de vérification.
+\end{itemize}
+
+De plus, les outils de vérification formelle tels que Coq permettent de prouver la correction des systèmes basés sur la logique linéaire. Ces outils inspirent des approches similaires à celles de CompCert et CakeML, qui garantissent la sûreté des transformations de compilation. L'application de ces principes à la logique linéaire ouvre de nouvelles perspectives pour raisonner sur des systèmes complexes, en évitant les erreurs critiques.
 
 \section{Problématique}
 
-c'est quoi la problématique ici
+L'utilisation de la logique linéaire dans des systèmes formels soulève plusieurs défis majeurs :
+
+\begin{itemize}
+    \item \textbf{Gestion des contextes linéaires} : Chaque hypothèse doit être utilisée exactement une fois, nécessitant des techniques sophistiquées pour diviser et gérer les contextes dans des outils comme Coq.
+    \item \textbf{Formalisation des règles} : Les règles de la logique linéaire doivent être adaptées pour s'intégrer dans des cadres automatisés de preuve tout en conservant leur expressivité et leur rigueur.
+    \item \textbf{Applications multi-domaines} : La logique linéaire est utilisée à la fois en programmation quantique et en systèmes concurrents, nécessitant des outils capables de répondre aux exigences variées de ces domaines.
+\end{itemize}
+
+Ces défis nécessitent le développement d'outils spécifiques pour formaliser et vérifier efficacement les systèmes basés sur la logique linéaire.
 
 \section{Objectifs}
 
-c'est quoi la solution et les objectifs a atteindre
+L'objectif de ce travail est de proposer une solution adaptée à l'encodage et à la vérification des systèmes basés sur la logique linéaire. Cette solution, appelée CARVe (Context-Aware Resource Verification), se concentre sur trois aspects clés :
+
+\begin{itemize}
+    \item \textbf{Allocation des ressources} : En mécanisant les règles multiplicatives à plusieurs prémisses, CARVe introduit un mécanisme explicite de division et de fusion des contextes. Contrairement à des approches traditionnelles qui fusionnent des contextes disjoints, CARVe les entrelace en conservant les mêmes éléments tout en adaptant leurs multiplicités selon une opération algébrique.
+    \item \textbf{Exhaustivité} : Pour les règles exigeant un contexte vide, CARVe utilise des étiquettes de multiplicité pour vérifier que seules des hypothèses non restreintes subsistent. Ce mécanisme garantit que les contextes respectent des propriétés telles que l'exhaustivité ou l'unicité des hypothèses, selon les besoins du système encodé.
+    \item \textbf{Recherche et manipulation des contextes} : CARVe permet une recherche et une mise à jour efficaces des contextes en modifiant simplement les étiquettes de multiplicité des variables. Ce mécanisme général d'actualisation des contextes offre une flexibilité pour gérer les ressources et leurs types dans différents systèmes logiques.
+\end{itemize}
