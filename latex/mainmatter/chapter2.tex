@@ -4,6 +4,27 @@
 \label{sec::chapitre2}
 
 \section{Lambda-calcul}
+
+Le lambda-calcul est un formalisme essentiel en informatique théorique, utilisé pour étudier les fonctions et les calculs. Il sert de fondement aux langages de programmation fonctionnelle et aux systèmes logiques. Ce chapitre explore les différentes variantes du lambda-calcul, en mettant l'accent sur le lambda-calcul linéaire et son lien avec la logique linéaire.
+
 \subsection{Lambda-calcul non typé}
+
+Le lambda-calcul non typé est la version la plus fondamentale, où les fonctions sont définies sans aucune restriction de type. Les termes sont construits à partir de variables, d'abstractions (\( \lambda x.M \), où \( x \) est une variable et \( M \) un terme), et d'applications (\( M N \), où \( M \) et \( N \) sont des termes). Les règles de réduction, telles que la \( \beta \)-réduction, permettent d'évaluer les termes. Bien que puissant, le lambda-calcul non typé peut conduire à des termes non définis et des comportements indécidables.
+
 \subsection{Lambda-calcul simplement typé}
+
+Le lambda-calcul simplement typé introduit des types pour chaque terme, assurant ainsi une meilleure structure et évitant les paradoxes du lambda-calcul non typé. Les types sont assignés aux variables et propagés dans les abstractions et applications selon des règles précises. Par exemple, si \( x : A \) et \( M : B \), alors \( \lambda x.M : A \rightarrow B \). Ce système garantit la terminaison des calculs, car seuls les termes bien typés peuvent être évalués.
+
 \subsection{Lambda-calcul linéaire}
+
+Le lambda-calcul linéaire est une extension du lambda-calcul typé, basée sur la logique linéaire. Il impose des contraintes strictes sur l'utilisation des variables : chaque variable doit être utilisée exactement une fois. Cela reflète des propriétés fondamentales de la gestion des ressources, telles que l'interdiction de copier ou de supprimer arbitrairement des données.
+
+Les types du lambda-calcul linéaire incluent des connecteurs multiplicatifs (\( \otimes \), \( \multimap \)) et additives (\( \& \), \( \oplus \)), qui permettent de représenter des ressources partagées ou exclusives. Ce formalisme trouve des applications dans la programmation parallèle, les langages quantiques comme ProtoQuipper, et la vérification formelle des systèmes.
+
+\subsection{Lien avec la logique linéaire}
+
+La logique linéaire, introduite par Jean-Yves Girard, est une logique sous-structurale qui contrôle l'utilisation des ressources de manière stricte. Elle se distingue des logiques classiques par l'absence des règles de contraction et d'affaiblissement, ce qui signifie que chaque hypothèse doit être utilisée exactement une fois. Cette caractéristique est directement reflétée dans le lambda-calcul linéaire.
+
+Les connecteurs multiplicatifs (\( \otimes \), \( \multimap \)) et additives (\( \& \), \( \oplus \)) du lambda-calcul linéaire sont directement inspirés des connecteurs de la logique linéaire, permettant de modéliser des ressources partagées ou exclusives.
+
+Ainsi, le lambda-calcul linéaire offre un cadre rigoureux pour raisonner sur l'allocation et l'utilisation des ressources dans divers contextes informatiques. Cette approche est particulièrement utile dans des domaines tels que la programmation parallèle, les langages quantiques, et la vérification formelle des systèmes, où la gestion précise des ressources est cruciale.

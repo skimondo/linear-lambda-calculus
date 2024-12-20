@@ -3,11 +3,39 @@
 \chapter{Travaux réalisés}
 \label{sec::chapitre4}
 
-\section{linear lambda calculus}
-Vous pouvez accéder au dépôt GitHub du projet sur le calcul lambda linéaire ici : \url{https://github.com/skimondo/linear-lambda-calculus}
+\section{La logique linéaire lambda dans Coq}
 
-\section{CARVe}
+Ce projet vise à traduire une implémentation du lambda-calcul linéaire de l'assistant de preuve Beluga à Coq. Une implémentation basée sur la méthode CARVe dans Beluga est disponible sur Zenodo :
+\url{https://zenodo.org/records/14271731}.
 
-\section{Proofs}
+Le dépôt du projet réalisé, qui implémente la méthode CARVe dans l'assistant de preuve Coq, est disponible sur GitHub : \url{https://github.com/skimondo/linear-lambda-calculus}.
 
-\section{Conclusion}
+L'objectif était de comparer les deux assistants de preuve en termes de complexité des preuves, des défis d'implémentation et de leur facilité d'utilisation globale. Le fichier \texttt{comparison.md} dans le dépôt détaille toutes les différences rencontrées lors de la traduction des définitions et des lemmes.
+
+\section{Preuves}
+
+L'implémentation des preuves inclut :
+\begin{itemize}
+    \item La gestion des contextes linéaires, en utilisant des mécanismes explicites pour l'allocation des ressources et la fusion des contextes.
+    \item Les propriétés fondamentales comme l'égalité des multiplicités et les règles de fusion des contextes.
+    \item La formalisation des définitions inductives pour gérer les contextes et les multiplicités dans les deux assistants de preuve.
+\end{itemize}
+
+Le dépôt contient deux répertoires principaux : \texttt{beluga/} et \texttt{coq/}, représentant respectivement les implémentations dans Beluga et Coq. Chaque répertoire inclut des définitions communes et des lemmes illustrant la logique linéaire.
+
+\section{Comparaison entre Beluga et Coq}
+
+Les similarités et différences entre Beluga et Coq pour l'implémentation du lambda-calcul linéaire sont analysées dans le fichier détaillé disponible ici : \url{https://github.com/skimondo/linear-lambda-calculus/blob/main/docs/comparison.md}.
+
+\subsection{Résumé}
+
+\begin{itemize}
+    \item \textbf{Similarités} : Les deux assistants de preuve partagent des structures similaires pour les définitions de types, les règles inductives et la gestion des contextes linéaires.
+    \item \textbf{Différences} :
+    \begin{itemize}
+        \item Beluga utilise des contextes implicites et des preuves construites par appariement dépendant.
+        \item Coq requiert une gestion explicite des contextes et des preuves guidées par des tactiques.
+    \end{itemize}
+    \item \textbf{Automatisation des preuves} : Beluga favorise une approche constructive par récursion, tandis que Coq s'appuie sur une construction pas à pas à l'aide de tactiques.
+    \item \textbf{Suitabilité} : Beluga est spécialisé pour les systèmes dépendamment typés, tandis que Coq offre une utilité plus générale pour divers cadres de formalisation.
+\end{itemize}
